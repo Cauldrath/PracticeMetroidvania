@@ -97,7 +97,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DamageType: 1
+  FactionDamage: 2
   damage: 1
+  active: 1
   damageCollider: {fileID: -8695280891447684016}
 --- !u!114 &-3200300682429601318
 MonoBehaviour:
@@ -117,6 +119,7 @@ MonoBehaviour:
   invincibilityTime: 1
   InvincibleVulnerabilities: 0
   InvincibilityTriggers: 27
+  DamagedByFaction: 5
   vulnerableCollider: {fileID: -8695280891447684016}
   OnTakeDamage:
     m_PersistentCalls:

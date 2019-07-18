@@ -6,6 +6,8 @@ public class Damager : MonoBehaviour
 {
     [EnumFlag]
     public DamageTypes DamageType = DamageTypes.Collision;
+    [EnumFlag]
+    public Factions FactionDamage = Factions.Player;
     public int damage = 1;
     public bool active = true;
     public Collider2D damageCollider;
@@ -27,10 +29,7 @@ public class Damager : MonoBehaviour
                 Damageable damageable = results[loop].GetComponent<Damageable>();
                 if (damageable)
                 {
-                    List<Damager> damagerChildren = new List<Damager>();
-                    damageable.gameObject.GetComponentsInChildren<Damager>(damagerChildren);
-                    // Only damage other objects
-                    if (damagerChildren.IndexOf(this) == -1)
+                    if ((damageable.DamagedByFaction & FactionDamage) != 0)
                     {
                         damageable.Hit(this);
                     }

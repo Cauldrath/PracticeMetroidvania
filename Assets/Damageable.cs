@@ -9,7 +9,17 @@ public enum DamageTypes
     Fire = 2,
     LightMelee = 4,
     Melee = 8,
-    Projectile = 16
+    Projectile = 16,
+    ProjectileDestroyer = 32,
+    Explosive = 64,
+    Ice = 128
+}
+
+public enum Factions
+{
+    Player = 1,
+    Enemy = 2,
+    Hazard = 4
 }
 
 public class Damageable : MonoBehaviour
@@ -28,6 +38,8 @@ public class Damageable : MonoBehaviour
     public DamageTypes InvincibleVulnerabilities = 0;
     [EnumFlag]
     public DamageTypes InvincibilityTriggers = DamageTypes.Collision | DamageTypes.Fire | DamageTypes.Melee | DamageTypes.Projectile;
+    [EnumFlag]
+    public Factions DamagedByFaction = Factions.Enemy | Factions.Hazard;
     public Collider2D vulnerableCollider;
     public DamageEvent OnTakeDamage;
 

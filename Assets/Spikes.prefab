@@ -121,5 +121,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DamageType: 1
+  FactionDamage: 4
   damage: 1
+  active: 1
   damageCollider: {fileID: 9003442744145649528}

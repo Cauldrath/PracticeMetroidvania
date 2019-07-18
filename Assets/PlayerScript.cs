@@ -24,7 +24,10 @@ public class PlayerScript : MonoBehaviour
     public float downstabFallSpeed = 0.75f;
     public float downstabTerminalVelocity = 15.0f;
     public Damageable damageable;
-    public Damager melee;
+    public Damager groundMelee;
+    public Damager jumpMelee;
+    public Damager downStab;
+    public Damager currentMelee;
 
     private Rigidbody2D body;
     private BoxCollider2D hitbox;
@@ -67,24 +70,27 @@ public class PlayerScript : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.name.StartsWith("Jump Power Up"))
+        if (collision.gameObject.activeSelf)
         {
-            maxJumps = 2;
-            collision.gameObject.SetActive(false);
-        }
-        if (collision.gameObject.name.StartsWith("Air Dash Power Up"))
-        {
-            canAirDash = true;
-            collision.gameObject.SetActive(false);
-        }
-        if (collision.gameObject.name.StartsWith("Down Stab Power Up"))
-        {
-            canDownStab = true;
-            collision.gameObject.SetActive(false);
-        }
-        if (collision.gameObject.name.StartsWith("Exit"))
-        {
-            showEnding = true;
+            if (collision.gameObject.name.StartsWith("Jump Power Up"))
+            {
+                maxJumps++;
+                collision.gameObject.SetActive(false);
+            }
+            if (collision.gameObject.name.StartsWith("Air Dash Power Up"))
+            {
+                canAirDash = true;
+                collision.gameObject.SetActive(false);
+            }
+            if (collision.gameObject.name.StartsWith("Down Stab Power Up"))
+            {
+                canDownStab = true;
+                collision.gameObject.SetActive(false);
+            }
+            if (collision.gameObject.name.StartsWith("Exit"))
+            {
+                showEnding = true;
+            }
         }
     }
 
@@ -146,7 +152,7 @@ public class PlayerScript : MonoBehaviour
                 if (attackDuration < 0)
                 {
                     attackDuration = 0;
-                    melee.active = false;
+                    currentMelee.active = false;
                 }
             }
             else
@@ -174,7 +180,7 @@ public class PlayerScript : MonoBehaviour
                     EndDash();
                     isDownstabbing = false;
                     attackDuration = 0;
-                    melee.active = false;
+                    currentMelee.active = false;
                 }
                 if (Input.GetButtonDown("Fire1"))
                 {
@@ -193,7 +199,7 @@ public class PlayerScript : MonoBehaviour
                         }
                         jumpsLeft--;
                         isDownstabbing = false;
-                        melee.active = false;
+                        currentMelee.active = false;
                         attackDuration = 0;
                         isAirDashing = true;
                     }
@@ -237,28 +243,29 @@ public class PlayerScript : MonoBehaviour
                 if (attackDuration == 0)
                 {
                     EndDash();
-                    melee.active = true;
+                    currentMelee.active = false;
                     if (onGround)
                     {
                         // Normal ground slash
                         attackDuration = groundAttackDuration;
-                        melee.DamageType = DamageTypes.LightMelee;
+                        currentMelee = groundMelee;
                     }
                     else
                     {
                         if (Input.GetAxis("Vertical") < 0 && canDownStab)
                         {
                             // Downstab
-                            melee.DamageType = DamageTypes.Fire;
                             isDownstabbing = true;
+                            currentMelee = downStab;
                         }
                         else
                         {
                             // Normal jump slash
-                            melee.DamageType = DamageTypes.Melee;
+                            currentMelee = jumpMelee;
                         }
                         attackDuration = -1;
                     }
+                    currentMelee.active = true;
                 }
             }
         }
@@ -270,7 +277,7 @@ public class PlayerScript : MonoBehaviour
                 if (attackDuration < 0)
                 {
                     attackDuration = 0;
-                    melee.active = false;
+                    currentMelee.active = false;
                 }
             }
             if (onGround)
@@ -419,7 +426,7 @@ public class PlayerScript : MonoBehaviour
         jumpLeft = 0;
         dashLeft = 0;
         attackDuration = 0;
-        melee.active = false;
+        currentMelee.active = false;
         if (damager.damageCollider.gameObject.transform.position.x < damageable.vulnerableCollider.gameObject.transform.position.x)
         {
             knockbackLeft = knockbackDuration;
