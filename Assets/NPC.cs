@@ -20,7 +20,7 @@ public class NPC : MonoBehaviour
     {
         if (damageable.Health <= 0)
         {
-            this.gameObject.SetActive(false);
+            Destroy(this.gameObject);
         }
     }
 }
