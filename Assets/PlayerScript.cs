@@ -333,7 +333,7 @@ public class PlayerScript : MonoBehaviour
             terrainMask = LayerMask.GetMask("Default");
         } else
         {
-            terrainMask = LayerMask.GetMask("Default", "Hazards");
+            terrainMask = LayerMask.GetMask("Default", "Hazards", "Enemies");
         }
         if (dashLeft > 0 || dashJumping)
         {

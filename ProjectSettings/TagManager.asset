@@ -15,9 +15,9 @@ TagManager:
   - 
   - 
   - Hazards
-  - 
-  - 
-  - 
+  - Enemies
+  - EnemyProjectile
+  - PlayerProjectile
   - 
   - 
   - 
