@@ -10,6 +10,9 @@ public class PlayerScript : MonoBehaviour
     public float terminalVelocity = 10.0f;
     public float jumpSpeed = 1.0f;
     public float jumpTime = 1.0f;
+    public float highJumpSpeed = 1.5f;
+    public float highJumpTime = 1.33f;
+    public float energyAbsorbDuration = 10.0f;
     public float dashSpeed = 10.0f;
     public float airDashTime = 1.5f;
     public float groundDashTime = 1.5f;
@@ -29,19 +32,30 @@ public class PlayerScript : MonoBehaviour
     public Damager downStab;
     public Damager currentMelee;
 
+    public bool canAirDash = false;
+    public bool canDownStab = false;
+    public bool canHighJump = false;
+    public bool canEnergyAbsorb = false;
+    public bool canWallClimb = false;
+    public bool canUppercut = false;
+
+
     private Rigidbody2D body;
     private BoxCollider2D hitbox;
-    private bool canAirDash = false;
-    private bool canDownStab = false;
     private float jumpLeft = 0.0f;
     private float offGroundTime = 0.0f;
     private int jumpsLeft = 0;
     private bool dashJumping = false;
+    private bool highJumping = false;
+    private bool ceilingClinging = false;
+    private bool wallClimbing = false;
     private float dashLeft = 0.0f;
     private bool showEnding = false;
     private float knockbackLeft = 0.0f;
     private float attackDuration = 0.0f;
     private float downstabDuration = 0;
+    private DamageTypes energyAbsorbed = 0;
+    private float energyAbsorbLeft = 0;
     private bool isAirDashing = false;
     private bool isDownstabbing = false;
 
@@ -87,6 +101,26 @@ public class PlayerScript : MonoBehaviour
                 canDownStab = true;
                 collision.gameObject.SetActive(false);
             }
+            if (collision.gameObject.name.StartsWith("High Jump Power Up"))
+            {
+                canHighJump = true;
+                collision.gameObject.SetActive(false);
+            }
+            if (collision.gameObject.name.StartsWith("Energy Absorb Power Up"))
+            {
+                canEnergyAbsorb = true;
+                collision.gameObject.SetActive(false);
+            }
+            if (collision.gameObject.name.StartsWith("Wall Climb Power Up"))
+            {
+                canWallClimb = true;
+                collision.gameObject.SetActive(false);
+            }
+            if (collision.gameObject.name.StartsWith("Uppercut Power Up"))
+            {
+                canUppercut = true;
+                collision.gameObject.SetActive(false);
+            }
             if (collision.gameObject.name.StartsWith("Exit"))
             {
                 showEnding = true;
@@ -112,6 +146,7 @@ public class PlayerScript : MonoBehaviour
         if (Input.GetButtonUp("Jump"))
         {
             jumpLeft = 0;
+            highJumping = false;
         }
         if (Input.GetButtonUp("Fire1"))
         {
@@ -146,9 +181,14 @@ public class PlayerScript : MonoBehaviour
                 jumpsLeft = maxJumps;
                 offGroundTime = 0.0f;
                 dashJumping = false;
+                if (downstabDuration >= downstabChargeTime)
+                {
+                    // TODO: Spawn charged downstab explosion
+                }
                 downstabDuration = 0.0f;
                 isDownstabbing = false;
                 jumpLeft = 0;
+                highJumping = false;
                 if (attackDuration < 0)
                 {
                     attackDuration = 0;
@@ -169,13 +209,24 @@ public class PlayerScript : MonoBehaviour
             if (knockbackLeft == 0) {
                 if (jumpsLeft > 0 && Input.GetButtonDown("Jump"))
                 {
+
                     jumpLeft = jumpTime;
                     jumpsLeft--;
-                    if (offGroundTime <= jumpForgiveness && dashLeft > 0)
+                    if (offGroundTime <= jumpForgiveness)
                     {
-                        dashJumping = true;
-                        // You get one less jump when dash jumping
-                        jumpsLeft--;
+                        if (canHighJump && Input.GetAxis("Vertical") > 0)
+                        {
+                            jumpLeft = highJumpTime;
+                            highJumping = true;
+                            // You get one less jump when high jumping
+                            jumpsLeft--;
+                        }
+                        else if (dashLeft > 0)
+                        {
+                            dashJumping = true;
+                            // You get one less jump when dash jumping
+                            jumpsLeft--;
+                        }
                     }
                     EndDash();
                     isDownstabbing = false;
@@ -231,12 +282,26 @@ public class PlayerScript : MonoBehaviour
         }
         else
         {
-            if (horizontalVelocity > 0)
+            if (highJumping)
             {
-                body.transform.localScale = new Vector3(1, 1, 1);
-            } else if (horizontalVelocity < 0)
+                if (Input.GetAxis("Vertical") > 0)
+                {
+                    horizontalVelocity = 0;
+                } else
+                {
+                    highJumping = false;
+                }
+            }
+            if (attackDuration == 0)
             {
-                body.transform.localScale = new Vector3(-1, 1, 1);
+                if (horizontalVelocity > 0)
+                {
+                    body.transform.localScale = new Vector3(1, 1, 1);
+                }
+                else if (horizontalVelocity < 0)
+                {
+                    body.transform.localScale = new Vector3(-1, 1, 1);
+                }
             }
             if (Input.GetButtonDown("Fire2"))
             {
@@ -297,7 +362,19 @@ public class PlayerScript : MonoBehaviour
         if (jumpLeft > 0)
         {
             jumpLeft -= Time.deltaTime;
-            verticalVelocity = jumpSpeed;
+            if (highJumping)
+            {
+                verticalVelocity = highJumpSpeed;
+            }
+            else
+            {
+                verticalVelocity = jumpSpeed;
+            }
+            if (jumpLeft < 0)
+            {
+                jumpLeft = 0;
+                highJumping = false;
+            }
             damageable.Vulnerabilities |= DamageTypes.Collision;
         }
         else if (isAirDashing)
