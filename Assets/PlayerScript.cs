@@ -17,6 +17,7 @@ public class PlayerScript : MonoBehaviour
     public float airDashTime = 1.5f;
     public float groundDashTime = 1.5f;
     public float groundedRaycastDistance = 0.02f;
+    public float ceilingRaycastDistance = 0.1f;
     public float wallRaycastDistance = 0.02f;
     public float jumpForgiveness = 0.1f;
     public float knockbackDuration = 0.25f;
@@ -26,6 +27,10 @@ public class PlayerScript : MonoBehaviour
     public float downstabChargeTime = 2.0f;
     public float downstabFallSpeed = 0.75f;
     public float downstabTerminalVelocity = 15.0f;
+    public float wallClimbFallSpeed = 0.5f;
+    public float wallClimbFastFallSpeed = 0.5f;
+    public float wallClimbTerminalVelocity = 5.0f;
+    public float wallClimbFastTerminalVelocity = 10.0f;
     public Damageable damageable;
     public Damager groundMelee;
     public Damager jumpMelee;
@@ -154,13 +159,13 @@ public class PlayerScript : MonoBehaviour
         }
 
         bool onGround = false;
-        if (jumpLeft <= 0 && !isAirDashing)
+        if (jumpLeft <= 0 && !isAirDashing && !ceilingClinging)
         {
             // Check to see if you are on the ground
             Vector2[] m_RaycastPositions = new Vector2[3];
 
             Vector2 raycastDirection = Vector2.down;
-            Vector2 raycastStartBottomCenter = raycastStart + Vector2.down * (hitbox.size.y * 0.5f - groundedRaycastDistance);
+            Vector2 raycastStartBottomCenter = raycastStart + Vector2.down * (hitbox.size.y - groundedRaycastDistance);
 
             m_RaycastPositions[0] = raycastStartBottomCenter + Vector2.left * hitbox.size.x * 0.5f;
             m_RaycastPositions[1] = raycastStartBottomCenter;
@@ -209,12 +214,12 @@ public class PlayerScript : MonoBehaviour
             if (knockbackLeft == 0) {
                 if (jumpsLeft > 0 && Input.GetButtonDown("Jump"))
                 {
-
+                    wallClimbing = false;
                     jumpLeft = jumpTime;
                     jumpsLeft--;
                     if (offGroundTime <= jumpForgiveness)
                     {
-                        if (canHighJump && Input.GetAxis("Vertical") > 0)
+                        if (canHighJump && !wallClimbing && Input.GetAxis("Vertical") > 0)
                         {
                             jumpLeft = highJumpTime;
                             highJumping = true;
@@ -233,32 +238,35 @@ public class PlayerScript : MonoBehaviour
                     attackDuration = 0;
                     currentMelee.active = false;
                 }
-                if (Input.GetButtonDown("Fire1"))
-                {
-                    if (onGround)
-                    {
-                        dashLeft = groundDashTime;
-                    } else if (jumpsLeft > 0 && maxJumps > 1 && canAirDash)
-                    {
-                        // Air dash
-                        dashLeft = airDashTime;
-                        jumpLeft = 0;
-                        // If you are in the jump forgiveness time, remove the forgiveness jump
-                        if (jumpsLeft == maxJumps)
-                        {
-                            jumpsLeft--;
-                        }
-                        jumpsLeft--;
-                        isDownstabbing = false;
-                        currentMelee.active = false;
-                        attackDuration = 0;
-                        isAirDashing = true;
-                    }
-                }
             }
         } else
         {
             offGroundTime = jumpForgiveness;
+        }
+
+        if (Input.GetButtonDown("Fire1"))
+        {
+            if (onGround)
+            {
+                dashLeft = groundDashTime;
+            }
+            else if (jumpsLeft > 0 && maxJumps > 1 && canAirDash)
+            {
+                // Air dash
+                dashLeft = airDashTime;
+                jumpLeft = 0;
+                // If you are in the jump forgiveness time, remove the forgiveness jump
+                if (jumpsLeft == maxJumps)
+                {
+                    jumpsLeft--;
+                }
+                jumpsLeft--;
+                isDownstabbing = false;
+                ceilingClinging = false;
+                currentMelee.active = false;
+                attackDuration = 0;
+                isAirDashing = true;
+            }
         }
 
         float horizontalVelocity = Input.GetAxis("Horizontal") * moveSpeed;
@@ -287,7 +295,43 @@ public class PlayerScript : MonoBehaviour
                 if (Input.GetAxis("Vertical") > 0)
                 {
                     horizontalVelocity = 0;
-                } else
+
+                    Vector2[] m_RaycastPositions = new Vector2[3];
+
+                    Vector2 raycastDirection = Vector2.up;
+                    Vector2 raycastStartTopCenter = raycastStart + Vector2.up * (hitbox.size.y * 0.5f);
+
+                    m_RaycastPositions[0] = raycastStartTopCenter + Vector2.left * hitbox.size.x * 0.5f;
+                    m_RaycastPositions[1] = raycastStartTopCenter;
+                    m_RaycastPositions[2] = raycastStartTopCenter + Vector2.right * hitbox.size.x * 0.5f;
+
+                    float closestHitDistance = -1.0f;
+                    for (int i = 0; i < m_RaycastPositions.Length; i++)
+                    {
+                        RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, ceilingRaycastDistance);
+                        if (hit.collider != null)
+                        {
+                            ceilingClinging = true;
+                            if (closestHitDistance == -1 || closestHitDistance > hit.distance)
+                            {
+                                closestHitDistance = hit.distance;
+                            }
+                        }
+                    }
+                    if (ceilingClinging)
+                    {
+                        if (closestHitDistance != -1.0f)
+                        {
+                            transform.position = new Vector3(transform.position.x, transform.position.y + closestHitDistance, transform.position.z);
+                        }
+                        dashLeft = 0;
+                        currentMelee.active = false;
+                        attackDuration = 0;
+                        highJumping = false;
+                        jumpLeft = 0;
+                    }
+                }
+                else
                 {
                     highJumping = false;
                 }
@@ -328,6 +372,7 @@ public class PlayerScript : MonoBehaviour
                             // Normal jump slash
                             currentMelee = jumpMelee;
                         }
+                        ceilingClinging = false;
                         attackDuration = -1;
                     }
                     currentMelee.active = true;
@@ -377,11 +422,43 @@ public class PlayerScript : MonoBehaviour
             }
             damageable.Vulnerabilities |= DamageTypes.Collision;
         }
+        else if (ceilingClinging)
+        {
+            verticalVelocity = 0;
+            horizontalVelocity = 0;
+            jumpsLeft = maxJumps - 1;
+            if (Input.GetAxis("Vertical") <= 0)
+            {
+                ceilingClinging = false;
+            }
+        }
         else if (isAirDashing)
         {
             verticalVelocity = 0;
             damageable.Vulnerabilities &= ~DamageTypes.Collision;
-        } else
+        }
+        else if(wallClimbing)
+        {
+            if (Input.GetAxis("Vertical") < 0)
+            {
+                // Fast falling
+                verticalVelocity -= wallClimbFastFallSpeed * Time.deltaTime;
+                if (verticalVelocity < wallClimbFastTerminalVelocity * -1)
+                {
+                    verticalVelocity = wallClimbFastTerminalVelocity * -1;
+                }
+            }
+            else
+            {
+                verticalVelocity -= wallClimbFallSpeed * Time.deltaTime;
+                if (verticalVelocity < wallClimbTerminalVelocity * -1)
+                {
+                    verticalVelocity = wallClimbTerminalVelocity * -1;
+                }
+            }
+            jumpsLeft = maxJumps;
+        }
+        else 
         {
             jumpLeft = 0;
             if (isDownstabbing)
@@ -446,6 +523,13 @@ public class PlayerScript : MonoBehaviour
             {
                 horizontalVelocity = 0;
                 EndDash();
+                if (canWallClimb && !onGround && jumpLeft <= 0 && !wallClimbing)
+                {
+                    StartWallClimb();
+                }
+            } else
+            {
+                wallClimbing = false;
             }
             if (body.velocity.x > 0)
             {
@@ -478,6 +562,13 @@ public class PlayerScript : MonoBehaviour
             {
                 horizontalVelocity = 0;
                 EndDash();
+                if (canWallClimb && !onGround && jumpLeft <= 0 && !wallClimbing)
+                {
+                    StartWallClimb();
+                }
+            } else
+            {
+                wallClimbing = false;
             }
             if (body.velocity.x < 0)
             {
@@ -486,8 +577,8 @@ public class PlayerScript : MonoBehaviour
         } else
         {
             EndDash();
+            wallClimbing = false;
         }
-
         body.velocity = new Vector2(horizontalVelocity, verticalVelocity);
     }
 
@@ -495,6 +586,13 @@ public class PlayerScript : MonoBehaviour
     {
         isAirDashing = false;
         dashLeft = 0;
+    }
+
+    private void StartWallClimb()
+    {
+        wallClimbing = true;
+        attackDuration = 0;
+        currentMelee.active = false;
     }
 
     public void OnHurt(Damager damager, Damageable damageable)
