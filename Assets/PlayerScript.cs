@@ -24,6 +24,8 @@ public class PlayerScript : MonoBehaviour
     public float knockbackPopup = 5.0f;
     public float knockbackSpeed = 5.0f;
     public float groundAttackDuration = 0.5f;
+    public float uppercutDuration = 0.75f;
+    public float jumpAttackDuration = 1.0f;
     public float downstabChargeTime = 2.0f;
     public float downstabFallSpeed = 0.75f;
     public float downstabTerminalVelocity = 15.0f;
@@ -35,6 +37,7 @@ public class PlayerScript : MonoBehaviour
     public Damager groundMelee;
     public Damager jumpMelee;
     public Damager downStab;
+    public Damager uppercut;
     public Damager currentMelee;
 
     public bool canAirDash = false;
@@ -47,6 +50,7 @@ public class PlayerScript : MonoBehaviour
 
     private Rigidbody2D body;
     private BoxCollider2D hitbox;
+    private Animator animator;
     private float jumpLeft = 0.0f;
     private float offGroundTime = 0.0f;
     private int jumpsLeft = 0;
@@ -63,11 +67,13 @@ public class PlayerScript : MonoBehaviour
     private float energyAbsorbLeft = 0;
     private bool isAirDashing = false;
     private bool isDownstabbing = false;
+    private bool isUppercutting = false;
 
     void Start()
     {
         body = GetComponent<Rigidbody2D>();
         hitbox = GetComponent<BoxCollider2D>();
+        animator = GetComponent<Animator>();
     }
 
     private void OnGUI()
@@ -161,53 +167,55 @@ public class PlayerScript : MonoBehaviour
         bool onGround = false;
         if (jumpLeft <= 0 && !isAirDashing && !ceilingClinging)
         {
-            // Check to see if you are on the ground
-            Vector2[] m_RaycastPositions = new Vector2[3];
-
-            Vector2 raycastDirection = Vector2.down;
-            Vector2 raycastStartBottomCenter = raycastStart + Vector2.down * (hitbox.size.y - groundedRaycastDistance);
-
-            m_RaycastPositions[0] = raycastStartBottomCenter + Vector2.left * hitbox.size.x * 0.5f;
-            m_RaycastPositions[1] = raycastStartBottomCenter;
-            m_RaycastPositions[2] = raycastStartBottomCenter + Vector2.right * hitbox.size.x * 0.5f;
-
-            for (int i = 0; i < m_RaycastPositions.Length; i++)
+            if (body.velocity.y <= 0)
             {
-                RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, groundedRaycastDistance * 2);
-                if (hit.collider != null)
-                {
-                    onGround = true;
-                }
-            }
+                // Check to see if you are on the ground
+                Vector2[] m_RaycastPositions = new Vector2[3];
 
-            if (onGround)
-            {
-                // If you are on the ground, restore jumps
-                jumpsLeft = maxJumps;
-                offGroundTime = 0.0f;
-                dashJumping = false;
-                if (downstabDuration >= downstabChargeTime)
+                Vector2 raycastDirection = Vector2.down;
+                Vector2 raycastStartBottomCenter = raycastStart + Vector2.down * (hitbox.size.y - groundedRaycastDistance);
+
+                m_RaycastPositions[0] = raycastStartBottomCenter + Vector2.left * hitbox.size.x * 0.5f;
+                m_RaycastPositions[1] = raycastStartBottomCenter;
+                m_RaycastPositions[2] = raycastStartBottomCenter + Vector2.right * hitbox.size.x * 0.5f;
+
+                for (int i = 0; i < m_RaycastPositions.Length; i++)
                 {
-                    // TODO: Spawn charged downstab explosion
+                    RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, groundedRaycastDistance * 2);
+                    if (hit.collider != null)
+                    {
+                        onGround = true;
+                    }
                 }
-                downstabDuration = 0.0f;
-                isDownstabbing = false;
-                jumpLeft = 0;
-                highJumping = false;
-                if (attackDuration < 0)
+
+                if (onGround)
                 {
-                    attackDuration = 0;
-                    currentMelee.active = false;
+                    // If you are on the ground, restore jumps
+                    jumpsLeft = maxJumps;
+                    if (offGroundTime > 0) 
+                    {
+                        EndAttack();
+                    }
+                    offGroundTime = 0.0f;
+                    dashJumping = false;
+                    if (downstabDuration >= downstabChargeTime)
+                    {
+                        // TODO: Spawn charged downstab explosion
+                    }
+                    downstabDuration = 0.0f;
+                    isDownstabbing = false;
+                    jumpLeft = 0;
+                    highJumping = false;
                 }
-            }
-            else
-            {
-                // If you are not on the ground, give a little forgiveness, then remove the first jump
-                offGroundTime += Time.deltaTime;
-                if (offGroundTime > jumpForgiveness && jumpsLeft >= maxJumps)
+                else
                 {
-                    jumpsLeft = maxJumps - 1;
-                    EndDash();
+                    // If you are not on the ground, give a little forgiveness, then remove the first jump
+                    offGroundTime += Time.deltaTime;
+                    if (offGroundTime > jumpForgiveness && jumpsLeft >= maxJumps)
+                    {
+                        jumpsLeft = maxJumps - 1;
+                        EndDash();
+                    }
                 }
             }
 
@@ -234,9 +242,7 @@ public class PlayerScript : MonoBehaviour
                         }
                     }
                     EndDash();
-                    isDownstabbing = false;
-                    attackDuration = 0;
-                    currentMelee.active = false;
+                    EndAttack();
                 }
             }
         } else
@@ -261,10 +267,8 @@ public class PlayerScript : MonoBehaviour
                     jumpsLeft--;
                 }
                 jumpsLeft--;
-                isDownstabbing = false;
                 ceilingClinging = false;
-                currentMelee.active = false;
-                attackDuration = 0;
+                EndAttack();
                 isAirDashing = true;
             }
         }
@@ -324,9 +328,8 @@ public class PlayerScript : MonoBehaviour
                         {
                             transform.position = new Vector3(transform.position.x, transform.position.y + closestHitDistance, transform.position.z);
                         }
-                        dashLeft = 0;
-                        currentMelee.active = false;
-                        attackDuration = 0;
+                        EndDash();
+                        EndAttack();
                         highJumping = false;
                         jumpLeft = 0;
                     }
@@ -355,25 +358,36 @@ public class PlayerScript : MonoBehaviour
                     currentMelee.active = false;
                     if (onGround)
                     {
-                        // Normal ground slash
-                        attackDuration = groundAttackDuration;
-                        currentMelee = groundMelee;
+                        if (canUppercut && Input.GetAxis("Vertical") > 0)
+                        {
+                            // Uppercut
+                            isUppercutting = true;
+                            attackDuration = uppercutDuration;
+                            currentMelee = uppercut;
+                        }
+                        else
+                        {
+                            // Normal ground slash
+                            attackDuration = groundAttackDuration;
+                            currentMelee = groundMelee;
+                        }
                     }
                     else
                     {
-                        if (Input.GetAxis("Vertical") < 0 && canDownStab)
+                        if (canDownStab && Input.GetAxis("Vertical") < 0)
                         {
                             // Downstab
                             isDownstabbing = true;
                             currentMelee = downStab;
+                            attackDuration = -1;
                         }
                         else
                         {
                             // Normal jump slash
                             currentMelee = jumpMelee;
+                            attackDuration = jumpAttackDuration;
                         }
                         ceilingClinging = false;
-                        attackDuration = -1;
                     }
                     currentMelee.active = true;
                 }
@@ -386,8 +400,7 @@ public class PlayerScript : MonoBehaviour
                 attackDuration -= Time.deltaTime;
                 if (attackDuration < 0)
                 {
-                    attackDuration = 0;
-                    currentMelee.active = false;
+                    EndAttack();
                 }
             }
             if (onGround)
@@ -580,6 +593,16 @@ public class PlayerScript : MonoBehaviour
             wallClimbing = false;
         }
         body.velocity = new Vector2(horizontalVelocity, verticalVelocity);
+
+        animator.SetBool("OnGround", onGround);
+        animator.SetBool("DownStab", isDownstabbing);
+        animator.SetBool("CeilingCling", ceilingClinging);
+        animator.SetBool("WallClimb", wallClimbing);
+        animator.SetBool("Melee", attackDuration != 0);
+        animator.SetBool("Dash", dashLeft > 0);
+        animator.SetBool("ChargedDownStab", downstabDuration >= downstabChargeTime);
+        animator.SetBool("Stun", knockbackLeft != 0);
+        animator.SetBool("Uppercut", isUppercutting);
     }
 
     private void EndDash()
@@ -588,10 +611,19 @@ public class PlayerScript : MonoBehaviour
         dashLeft = 0;
     }
 
+    private void EndAttack()
+    {
+        isUppercutting = false;
+        isDownstabbing = false;
+        attackDuration = 0;
+        currentMelee.active = false;
+    }
+
     private void StartWallClimb()
     {
         wallClimbing = true;
-        attackDuration = 0;
+        EndAttack();
+        isUppercutting = false;
         currentMelee.active = false;
     }
 
@@ -599,8 +631,10 @@ public class PlayerScript : MonoBehaviour
     {
         Debug.Log("Took " + damager.damage + " damage");
         jumpLeft = 0;
-        dashLeft = 0;
-        attackDuration = 0;
+        EndAttack();
+        EndDash();
+        ceilingClinging = false;
+        wallClimbing = false;
         currentMelee.active = false;
         if (damager.damageCollider.gameObject.transform.position.x < damageable.vulnerableCollider.gameObject.transform.position.x)
         {
