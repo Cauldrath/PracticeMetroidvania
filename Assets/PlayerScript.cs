@@ -8,10 +8,11 @@ public class PlayerScript : MonoBehaviour
     public float moveSpeed = 5.0f;
     public float fallSpeed = 0.5f;
     public float terminalVelocity = 10.0f;
-    public float jumpSpeed = 1.0f;
+    public float jumpSpeed = 10.0f;
     public float jumpTime = 1.0f;
-    public float highJumpSpeed = 1.5f;
+    public float highJumpSpeed = 20.0f;
     public float highJumpTime = 1.33f;
+    public float highJumpMinSpeed = 10.0f;
     public float energyAbsorbDuration = 10.0f;
     public float dashSpeed = 10.0f;
     public float airDashTime = 1.5f;
@@ -51,15 +52,17 @@ public class PlayerScript : MonoBehaviour
     private Rigidbody2D body;
     private BoxCollider2D hitbox;
     private Animator animator;
+    private LayerMask terrainMask;
+
     private float jumpLeft = 0.0f;
     private float offGroundTime = 0.0f;
+    private float walkVelocity = 0.0f;
     private int jumpsLeft = 0;
     private bool dashJumping = false;
     private bool highJumping = false;
     private bool ceilingClinging = false;
     private bool wallClimbing = false;
     private float dashLeft = 0.0f;
-    private bool showEnding = false;
     private float knockbackLeft = 0.0f;
     private float attackDuration = 0.0f;
     private float downstabDuration = 0;
@@ -68,29 +71,19 @@ public class PlayerScript : MonoBehaviour
     private bool isAirDashing = false;
     private bool isDownstabbing = false;
     private bool isUppercutting = false;
+    private bool onGround = false;
+    private bool fastFalling = false;
 
     void Start()
     {
         body = GetComponent<Rigidbody2D>();
         hitbox = GetComponent<BoxCollider2D>();
         animator = GetComponent<Animator>();
+        terrainMask = LayerMask.GetMask("Default", "Hazards", "Enemies");
     }
 
     private void OnGUI()
     {
-        if (showEnding)
-        {
-            GUI.ModalWindow(0, new Rect(100, 100, 200, 100), windowFunc, "Game Over");
-        }
-    }
-
-    private void windowFunc(int id)
-    {
-        GUI.Label(new Rect(10, 20, 180, 50), "You won the game. Item completion: " + (maxJumps * 100 / 3) + "%");
-        if (GUI.Button(new Rect(50, 60, 100, 30), "OK"))
-        {
-            Application.Quit();
-        }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -132,39 +125,16 @@ public class PlayerScript : MonoBehaviour
                 canUppercut = true;
                 collision.gameObject.SetActive(false);
             }
-            if (collision.gameObject.name.StartsWith("Exit"))
-            {
-                showEnding = true;
-            }
         }
     }
 
-    void Update()
+    private void FixedUpdate()
     {
+        float horizontalVelocity = body.velocity.x;
         float verticalVelocity = body.velocity.y;
         Vector2 raycastStart = body.position + hitbox.offset;
 
-        if (showEnding)
-        {
-            if (Input.GetButtonDown("Jump"))
-            {
-                Application.Quit();
-            }
-            body.velocity = new Vector2(0, 0);
-            return;
-        }
-
-        if (Input.GetButtonUp("Jump"))
-        {
-            jumpLeft = 0;
-            highJumping = false;
-        }
-        if (Input.GetButtonUp("Fire1"))
-        {
-            EndDash();
-        }
-
-        bool onGround = false;
+        onGround = false;
         if (jumpLeft <= 0 && !isAirDashing && !ceilingClinging)
         {
             if (body.velocity.y <= 0)
@@ -181,7 +151,7 @@ public class PlayerScript : MonoBehaviour
 
                 for (int i = 0; i < m_RaycastPositions.Length; i++)
                 {
-                    RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, groundedRaycastDistance * 2);
+                    RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, groundedRaycastDistance * 2, terrainMask);
                     if (hit.collider != null)
                     {
                         onGround = true;
@@ -192,7 +162,7 @@ public class PlayerScript : MonoBehaviour
                 {
                     // If you are on the ground, restore jumps
                     jumpsLeft = maxJumps;
-                    if (offGroundTime > 0) 
+                    if (offGroundTime > 0)
                     {
                         EndAttack();
                     }
@@ -206,6 +176,7 @@ public class PlayerScript : MonoBehaviour
                     isDownstabbing = false;
                     jumpLeft = 0;
                     highJumping = false;
+                    wallClimbing = false;
                 }
                 else
                 {
@@ -218,66 +189,18 @@ public class PlayerScript : MonoBehaviour
                     }
                 }
             }
-
-            if (knockbackLeft == 0) {
-                if (jumpsLeft > 0 && Input.GetButtonDown("Jump"))
-                {
-                    wallClimbing = false;
-                    jumpLeft = jumpTime;
-                    jumpsLeft--;
-                    if (offGroundTime <= jumpForgiveness)
-                    {
-                        if (canHighJump && !wallClimbing && Input.GetAxis("Vertical") > 0)
-                        {
-                            jumpLeft = highJumpTime;
-                            highJumping = true;
-                            // You get one less jump when high jumping
-                            jumpsLeft--;
-                        }
-                        else if (dashLeft > 0)
-                        {
-                            dashJumping = true;
-                            // You get one less jump when dash jumping
-                            jumpsLeft--;
-                        }
-                    }
-                    EndDash();
-                    EndAttack();
-                }
-            }
-        } else
+        }
+        else
         {
             offGroundTime = jumpForgiveness;
         }
 
-        if (Input.GetButtonDown("Fire1"))
-        {
-            if (onGround)
-            {
-                dashLeft = groundDashTime;
-            }
-            else if (jumpsLeft > 0 && maxJumps > 1 && canAirDash)
-            {
-                // Air dash
-                dashLeft = airDashTime;
-                jumpLeft = 0;
-                // If you are in the jump forgiveness time, remove the forgiveness jump
-                if (jumpsLeft == maxJumps)
-                {
-                    jumpsLeft--;
-                }
-                jumpsLeft--;
-                ceilingClinging = false;
-                EndAttack();
-                isAirDashing = true;
-            }
-        }
-
-        float horizontalVelocity = Input.GetAxis("Horizontal") * moveSpeed;
         if (knockbackLeft > 0)
         {
             horizontalVelocity = knockbackSpeed;
+            verticalVelocity -= fallSpeed * Time.deltaTime;
             knockbackLeft -= Time.deltaTime;
+            body.transform.localScale = new Vector3(-1, 1, 1);
             if (knockbackLeft < 0)
             {
                 knockbackLeft = 0;
@@ -286,152 +209,70 @@ public class PlayerScript : MonoBehaviour
         else if (knockbackLeft < 0)
         {
             horizontalVelocity = -knockbackSpeed;
+            verticalVelocity -= fallSpeed * Time.deltaTime;
             knockbackLeft += Time.deltaTime;
+            body.transform.localScale = new Vector3(1, 1, 1);
             if (knockbackLeft > 0)
             {
                 knockbackLeft = 0;
             }
         }
-        else
+        else if (highJumping)
         {
-            if (highJumping)
+            horizontalVelocity = 0;
+
+            Vector2[] m_RaycastPositions = new Vector2[3];
+
+            Vector2 raycastDirection = Vector2.up;
+            Vector2 raycastStartTopCenter = raycastStart + Vector2.up * (hitbox.size.y * 0.5f);
+
+            m_RaycastPositions[0] = raycastStartTopCenter + Vector2.left * hitbox.size.x * 0.5f;
+            m_RaycastPositions[1] = raycastStartTopCenter;
+            m_RaycastPositions[2] = raycastStartTopCenter + Vector2.right * hitbox.size.x * 0.5f;
+
+            float closestHitDistance = -1.0f;
+            for (int i = 0; i < m_RaycastPositions.Length; i++)
             {
-                if (Input.GetAxis("Vertical") > 0)
+                RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, ceilingRaycastDistance, terrainMask);
+                if (hit.collider != null)
                 {
-                    horizontalVelocity = 0;
-
-                    Vector2[] m_RaycastPositions = new Vector2[3];
-
-                    Vector2 raycastDirection = Vector2.up;
-                    Vector2 raycastStartTopCenter = raycastStart + Vector2.up * (hitbox.size.y * 0.5f);
-
-                    m_RaycastPositions[0] = raycastStartTopCenter + Vector2.left * hitbox.size.x * 0.5f;
-                    m_RaycastPositions[1] = raycastStartTopCenter;
-                    m_RaycastPositions[2] = raycastStartTopCenter + Vector2.right * hitbox.size.x * 0.5f;
-
-                    float closestHitDistance = -1.0f;
-                    for (int i = 0; i < m_RaycastPositions.Length; i++)
+                    ceilingClinging = true;
+                    if (closestHitDistance == -1 || closestHitDistance > hit.distance)
                     {
-                        RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, ceilingRaycastDistance);
-                        if (hit.collider != null)
-                        {
-                            ceilingClinging = true;
-                            if (closestHitDistance == -1 || closestHitDistance > hit.distance)
-                            {
-                                closestHitDistance = hit.distance;
-                            }
-                        }
+                        closestHitDistance = hit.distance;
                     }
-                    if (ceilingClinging)
+                }
+            }
+            if (ceilingClinging)
+            {
+                if (closestHitDistance != -1.0f)
+                {
+                    transform.position = new Vector3(transform.position.x, transform.position.y + closestHitDistance, transform.position.z);
+                }
+                EndDash();
+                EndAttack();
+                highJumping = false;
+                jumpLeft = 0;
+                horizontalVelocity = 0;
+                verticalVelocity = 0;
+                jumpsLeft = maxJumps - 1;
+            } else {
+                if (jumpLeft > 0)
+                {
+                    verticalVelocity = highJumpSpeed;
+                    jumpLeft -= Time.deltaTime;
+                    if (jumpLeft < 0)
                     {
-                        if (closestHitDistance != -1.0f)
-                        {
-                            transform.position = new Vector3(transform.position.x, transform.position.y + closestHitDistance, transform.position.z);
-                        }
-                        EndDash();
-                        EndAttack();
-                        highJumping = false;
                         jumpLeft = 0;
                     }
-                }
-                else
+                } else
                 {
-                    highJumping = false;
-                }
-            }
-            if (attackDuration == 0)
-            {
-                if (horizontalVelocity > 0)
-                {
-                    body.transform.localScale = new Vector3(1, 1, 1);
-                }
-                else if (horizontalVelocity < 0)
-                {
-                    body.transform.localScale = new Vector3(-1, 1, 1);
-                }
-            }
-            if (Input.GetButtonDown("Fire2"))
-            {
-                if (attackDuration == 0)
-                {
-                    EndDash();
-                    currentMelee.active = false;
-                    if (onGround)
+                    verticalVelocity -= fallSpeed * Time.deltaTime;
+                    if (verticalVelocity < highJumpMinSpeed)
                     {
-                        if (canUppercut && Input.GetAxis("Vertical") > 0)
-                        {
-                            // Uppercut
-                            isUppercutting = true;
-                            attackDuration = uppercutDuration;
-                            currentMelee = uppercut;
-                        }
-                        else
-                        {
-                            // Normal ground slash
-                            attackDuration = groundAttackDuration;
-                            currentMelee = groundMelee;
-                        }
+                        highJumping = false;
                     }
-                    else
-                    {
-                        if (canDownStab && Input.GetAxis("Vertical") < 0)
-                        {
-                            // Downstab
-                            isDownstabbing = true;
-                            currentMelee = downStab;
-                            attackDuration = -1;
-                        }
-                        else
-                        {
-                            // Normal jump slash
-                            currentMelee = jumpMelee;
-                            attackDuration = jumpAttackDuration;
-                        }
-                        ceilingClinging = false;
-                    }
-                    currentMelee.active = true;
                 }
-            }
-        }
-        if (attackDuration != 0)
-        {
-            if (attackDuration > 0)
-            {
-                attackDuration -= Time.deltaTime;
-                if (attackDuration < 0)
-                {
-                    EndAttack();
-                }
-            }
-            if (onGround)
-            {
-                horizontalVelocity = 0;
-            }
-        }
-
-        if (dashLeft > 0)
-        {
-            dashLeft -= Time.deltaTime;
-            if (dashLeft <= 0)
-            {
-                EndDash();
-            }
-        }
-        if (jumpLeft > 0)
-        {
-            jumpLeft -= Time.deltaTime;
-            if (highJumping)
-            {
-                verticalVelocity = highJumpSpeed;
-            }
-            else
-            {
-                verticalVelocity = jumpSpeed;
-            }
-            if (jumpLeft < 0)
-            {
-                jumpLeft = 0;
-                highJumping = false;
             }
             damageable.Vulnerabilities |= DamageTypes.Collision;
         }
@@ -440,158 +281,221 @@ public class PlayerScript : MonoBehaviour
             verticalVelocity = 0;
             horizontalVelocity = 0;
             jumpsLeft = maxJumps - 1;
-            if (Input.GetAxis("Vertical") <= 0)
-            {
-                ceilingClinging = false;
-            }
-        }
-        else if (isAirDashing)
-        {
-            verticalVelocity = 0;
-            damageable.Vulnerabilities &= ~DamageTypes.Collision;
-        }
-        else if(wallClimbing)
-        {
-            if (Input.GetAxis("Vertical") < 0)
-            {
-                // Fast falling
-                verticalVelocity -= wallClimbFastFallSpeed * Time.deltaTime;
-                if (verticalVelocity < wallClimbFastTerminalVelocity * -1)
-                {
-                    verticalVelocity = wallClimbFastTerminalVelocity * -1;
-                }
-            }
-            else
-            {
-                verticalVelocity -= wallClimbFallSpeed * Time.deltaTime;
-                if (verticalVelocity < wallClimbTerminalVelocity * -1)
-                {
-                    verticalVelocity = wallClimbTerminalVelocity * -1;
-                }
-            }
-            jumpsLeft = maxJumps;
-        }
-        else 
-        {
-            jumpLeft = 0;
-            if (isDownstabbing)
-            {
-                downstabDuration += Time.deltaTime;
-                verticalVelocity -= downstabFallSpeed * Time.deltaTime;
-                if (verticalVelocity < downstabTerminalVelocity * -1)
-                {
-                    verticalVelocity = downstabTerminalVelocity * -1;
-                }
-            }
-            else
-            {
-                verticalVelocity -= fallSpeed * Time.deltaTime;
-                if (verticalVelocity < terminalVelocity * -1)
-                {
-                    verticalVelocity = terminalVelocity * -1;
-                }
-            }
             damageable.Vulnerabilities |= DamageTypes.Collision;
+            if (walkVelocity > 0)
+            {
+                body.transform.localScale = new Vector3(1, 1, 1);
+            }
+            else if (walkVelocity < 0)
+            {
+                body.transform.localScale = new Vector3(-1, 1, 1);
+            }
         }
+        else
+        {
+            bool onWall = false;
+            if (walkVelocity < 0)
+            {
+                // Check to see if you are running into a wall to the left
+                Vector2 raycastDirection = Vector2.left;
+                Vector2 raycastStartLeftCenter = raycastStart + Vector2.left * (hitbox.size.x * 0.5f);
+                Vector2[] m_RaycastPositions = new Vector2[3];
+
+                m_RaycastPositions[0] = raycastStartLeftCenter + Vector2.up * hitbox.size.y * 0.5f;
+                m_RaycastPositions[1] = raycastStartLeftCenter;
+                m_RaycastPositions[2] = raycastStartLeftCenter + Vector2.down * hitbox.size.y * 0.5f;
+
+                for (int i = 0; i < m_RaycastPositions.Length; i++)
+                {
+                    RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, wallRaycastDistance, terrainMask);
+                    if (hit.collider != null)
+                    {
+                        onWall = true;
+                    }
+                }
+
+                if (horizontalVelocity > 0)
+                {
+                    EndDash();
+                }
+            }
+            else if (walkVelocity > 0)
+            {
+                // Check to see if you are running into a wall to the right
+                Vector2 raycastDirection = Vector2.right;
+                Vector2 raycastStartRightCenter = raycastStart + Vector2.right * (hitbox.size.x * 0.5f);
+                Vector2[] m_RaycastPositions = new Vector2[3];
+
+                m_RaycastPositions[0] = raycastStartRightCenter + Vector2.up * hitbox.size.y * 0.5f;
+                m_RaycastPositions[1] = raycastStartRightCenter;
+                m_RaycastPositions[2] = raycastStartRightCenter + Vector2.down * hitbox.size.y * 0.5f;
+
+                for (int i = 0; i < m_RaycastPositions.Length; i++)
+                {
+                    RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, wallRaycastDistance, terrainMask);
+                    if (hit.collider != null)
+                    {
+                        onWall = true;
+                    }
+                }
+
+                if (horizontalVelocity < 0)
+                {
+                    EndDash();
+                }
+            }
+            else
+            {
+                wallClimbing = false;
+            }
+
+            if (onWall)
+            {
+                horizontalVelocity = 0;
+                EndDash();
+                if (canWallClimb && !onGround && jumpLeft <= 0 && !wallClimbing)
+                {
+                    wallClimbing = true;
+                    EndAttack();
+                    EndDash();
+                    isUppercutting = false;
+                    currentMelee.active = false;
+                }
+            }
+            else
+            {
+                wallClimbing = false;
+                horizontalVelocity = walkVelocity;
+                if (dashJumping)
+                {
+                    if (walkVelocity > 0)
+                    {
+                        horizontalVelocity = dashSpeed;
+                    }
+                    else if (walkVelocity < 0)
+                    {
+                        horizontalVelocity = -dashSpeed;
+                    }
+                }
+                else if (dashLeft > 0)
+                {
+                    if (walkVelocity > 0)
+                    {
+                        horizontalVelocity = dashSpeed;
+                    } else if (walkVelocity < 0)
+                    {
+                        horizontalVelocity = -dashSpeed;
+                    } else
+                    {
+                        horizontalVelocity = body.transform.localScale.x * dashSpeed;
+                    }
+                    dashLeft -= Time.deltaTime;
+                    if (dashLeft <= 0)
+                    {
+                        EndDash();
+                    }
+                }
+            }
+
+            if (attackDuration == 0)
+            {
+                if (walkVelocity > 0)
+                {
+                    body.transform.localScale = new Vector3(1, 1, 1);
+                }
+                else if (walkVelocity < 0)
+                {
+                    body.transform.localScale = new Vector3(-1, 1, 1);
+                }
+            }
+            else
+            {
+                if (attackDuration > 0)
+                {
+                    attackDuration -= Time.deltaTime;
+                    if (attackDuration < 0)
+                    {
+                        EndAttack();
+                    }
+                }
+                if (onGround)
+                {
+                    horizontalVelocity = 0;
+                }
+            }
+
+            if (isAirDashing)
+            {
+                verticalVelocity = 0;
+                damageable.Vulnerabilities &= ~DamageTypes.Collision;
+            }
+            else
+            {
+                damageable.Vulnerabilities |= DamageTypes.Collision;
+
+                if (jumpLeft > 0)
+                {
+                    jumpLeft -= Time.deltaTime;
+                    verticalVelocity = jumpSpeed;
+                    if (jumpLeft < 0)
+                    {
+                        jumpLeft = 0;
+                    }
+                }
+                else if (wallClimbing)
+                {
+                    if (fastFalling)
+                    {
+                        verticalVelocity -= wallClimbFastFallSpeed * Time.deltaTime;
+                        if (verticalVelocity < wallClimbFastTerminalVelocity * -1)
+                        {
+                            verticalVelocity = wallClimbFastTerminalVelocity * -1;
+                        }
+                    }
+                    else
+                    {
+                        verticalVelocity -= wallClimbFallSpeed * Time.deltaTime;
+                        if (verticalVelocity < wallClimbTerminalVelocity * -1)
+                        {
+                            verticalVelocity = wallClimbTerminalVelocity * -1;
+                        }
+                    }
+                    jumpsLeft = maxJumps;
+                }
+                else
+                {
+                    jumpLeft = 0;
+                    if (isDownstabbing)
+                    {
+                        downstabDuration += Time.deltaTime;
+                        verticalVelocity -= downstabFallSpeed * Time.deltaTime;
+                        if (verticalVelocity < downstabTerminalVelocity * -1)
+                        {
+                            verticalVelocity = downstabTerminalVelocity * -1;
+                        }
+                    }
+                    else
+                    {
+                        verticalVelocity -= fallSpeed * Time.deltaTime;
+                        if (verticalVelocity < terminalVelocity * -1)
+                        {
+                            verticalVelocity = terminalVelocity * -1;
+                        }
+                    }
+                }
+            }
+        }
+
         Physics2D.IgnoreLayerCollision(2, 8, (damageable.Vulnerabilities & DamageTypes.Collision) == 0);
-        LayerMask terrainMask;
         if ((damageable.Vulnerabilities & DamageTypes.Collision) == 0)
         {
             terrainMask = LayerMask.GetMask("Default");
-        } else
+        }
+        else
         {
             terrainMask = LayerMask.GetMask("Default", "Hazards", "Enemies");
         }
-        if (dashLeft > 0 || dashJumping)
-        {
-            horizontalVelocity = Input.GetAxis("Horizontal") * dashSpeed;
-            if (dashLeft > 0 && horizontalVelocity == 0)
-            {
-                horizontalVelocity = body.transform.localScale.x * dashSpeed;
-            }
-        }
-        if (horizontalVelocity < 0)
-        {
-            // Check to see if you are running into a wall to the left
-            Vector2 raycastDirection = Vector2.left;
-            Vector2 raycastStartLeftCenter = raycastStart + Vector2.left * (hitbox.size.x * 0.5f);
-            Vector2[] m_RaycastPositions = new Vector2[3];
 
-            m_RaycastPositions[0] = raycastStartLeftCenter + Vector2.up * hitbox.size.y * 0.5f;
-            m_RaycastPositions[1] = raycastStartLeftCenter;
-            m_RaycastPositions[2] = raycastStartLeftCenter + Vector2.down * hitbox.size.y * 0.5f;
-
-            bool onWall = false;
-            for (int i = 0; i < m_RaycastPositions.Length; i++)
-            {
-                RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, wallRaycastDistance, terrainMask);
-                if (hit.collider != null)
-                {
-                    onWall = true;
-                }
-            }
-
-
-            if (onWall)
-            {
-                horizontalVelocity = 0;
-                EndDash();
-                if (canWallClimb && !onGround && jumpLeft <= 0 && !wallClimbing)
-                {
-                    StartWallClimb();
-                }
-            } else
-            {
-                wallClimbing = false;
-            }
-            if (body.velocity.x > 0)
-            {
-                EndDash();
-            }
-        }
-        else if (horizontalVelocity > 0)
-        {
-            // Check to see if you are running into a wall to the right
-            Vector2 raycastDirection = Vector2.right;
-            Vector2 raycastStartRightCenter = raycastStart + Vector2.right * (hitbox.size.x * 0.5f);
-            Vector2[] m_RaycastPositions = new Vector2[3];
-
-            m_RaycastPositions[0] = raycastStartRightCenter + Vector2.up * hitbox.size.y * 0.5f;
-            m_RaycastPositions[1] = raycastStartRightCenter;
-            m_RaycastPositions[2] = raycastStartRightCenter + Vector2.down * hitbox.size.y * 0.5f;
-
-            bool onWall = false;
-            for (int i = 0; i < m_RaycastPositions.Length; i++)
-            {
-                RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, wallRaycastDistance, terrainMask);
-                if (hit.collider != null)
-                {
-                    onWall = true;
-                }
-            }
-
-
-            if (onWall)
-            {
-                horizontalVelocity = 0;
-                EndDash();
-                if (canWallClimb && !onGround && jumpLeft <= 0 && !wallClimbing)
-                {
-                    StartWallClimb();
-                }
-            } else
-            {
-                wallClimbing = false;
-            }
-            if (body.velocity.x < 0)
-            {
-                EndDash();
-            }
-        } else
-        {
-            EndDash();
-            wallClimbing = false;
-        }
         body.velocity = new Vector2(horizontalVelocity, verticalVelocity);
 
         animator.SetBool("OnGround", onGround);
@@ -605,6 +509,129 @@ public class PlayerScript : MonoBehaviour
         animator.SetBool("Uppercut", isUppercutting);
     }
 
+    void Update()
+    {
+        if (knockbackLeft == 0)
+        {
+            if (Input.GetButtonUp("Jump"))
+            {
+                jumpLeft = 0;
+            }
+
+            if (Input.GetButtonUp("Fire1"))
+            {
+                EndDash();
+            }
+
+            if (jumpLeft <= 0 && !isAirDashing && !ceilingClinging && jumpsLeft > 0 && Input.GetButtonDown("Jump"))
+            {
+                jumpLeft = jumpTime;
+                jumpsLeft--;
+                // If this is your first jump off the ground
+                if (jumpsLeft == maxJumps - 1)
+                {
+                    if (canHighJump && !wallClimbing && Input.GetAxis("Vertical") > 0)
+                    {
+                        jumpLeft = highJumpTime;
+                        highJumping = true;
+                        // You get one less jump when high jumping
+                        jumpsLeft--;
+                    }
+                    else if (dashLeft > 0)
+                    {
+                        dashJumping = true;
+                        // You get one less jump when dash jumping
+                        jumpsLeft--;
+                    }
+                }
+                wallClimbing = false;
+                EndDash();
+                EndAttack();
+            }
+
+            walkVelocity = Input.GetAxis("Horizontal") * moveSpeed;
+            if (Input.GetButtonDown("Fire1"))
+            {
+                if (onGround)
+                {
+                    dashLeft = groundDashTime;
+                }
+                else if (jumpsLeft > 0 && maxJumps > 1 && canAirDash)
+                {
+                    // Air dash
+                    dashLeft = airDashTime;
+                    jumpLeft = 0;
+                    // If you are in the jump forgiveness time, remove the forgiveness jump
+                    if (jumpsLeft == maxJumps)
+                    {
+                        jumpsLeft--;
+                    }
+                    jumpsLeft--;
+                    ceilingClinging = false;
+                    EndAttack();
+                    isAirDashing = true;
+                }
+            }
+
+            // If you release up, stop high jumping and ceiling clinging
+            if (Input.GetAxis("Vertical") <= 0)
+            {
+                if (highJumping)
+                {
+                    highJumping = false;
+                }
+                if (ceilingClinging)
+                {
+                    ceilingClinging = false;
+                }
+            }
+
+            if (Input.GetButtonDown("Fire2") && attackDuration == 0)
+            {
+                EndDash();
+                currentMelee.active = false;
+                if (onGround)
+                {
+                    if (canUppercut && Input.GetAxis("Vertical") > 0)
+                    {
+                        // Uppercut
+                        isUppercutting = true;
+                        attackDuration = uppercutDuration;
+                        currentMelee = uppercut;
+                    }
+                    else
+                    {
+                        // Normal ground slash
+                        attackDuration = groundAttackDuration;
+                        currentMelee = groundMelee;
+                    }
+                }
+                else
+                {
+                    if (canDownStab && Input.GetAxis("Vertical") < 0)
+                    {
+                        // Downstab
+                        isDownstabbing = true;
+                        currentMelee = downStab;
+                        attackDuration = -1;
+                    }
+                    else
+                    {
+                        // Normal jump slash
+                        currentMelee = jumpMelee;
+                        attackDuration = jumpAttackDuration;
+                    }
+                    ceilingClinging = false;
+                }
+                currentMelee.active = true;
+            }
+            if (wallClimbing)
+            {
+                fastFalling = Input.GetAxis("Vertical") < 0;
+            }
+        }
+    }
+
     private void EndDash()
     {
         isAirDashing = false;
@@ -616,14 +643,6 @@ public class PlayerScript : MonoBehaviour
         isUppercutting = false;
         isDownstabbing = false;
         attackDuration = 0;
-        currentMelee.active = false;
-    }
-
-    private void StartWallClimb()
-    {
-        wallClimbing = true;
-        EndAttack();
-        isUppercutting = false;
         currentMelee.active = false;
     }
 
