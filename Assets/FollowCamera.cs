@@ -13,13 +13,25 @@ public class FollowCamera : MonoBehaviour
     public float OffsetTime = 2.0f;
     public float CenteringMultiplierX = 2.0f;
     public float CenteringMultiplierY = 2.0f;
+    public float MaxZoom = 6.0f;
+    public float MinZoom = 10.0f;
+    public float MinZoomRatio = 0.55f;
+    public float MinXOffsetRatio = 0.55f;
+    public float MinYOffsetRatio = 0.25f;
+    public float HardClampTime = 1.0f;
+    public List<CameraConstraint> constraints = new List<CameraConstraint>();
 
     private Vector3 VelocityOffset = new Vector3(0, 0, 0);
     private Vector3 TargetVelocityOffset = new Vector3(0, 0, 0);
+    private float TargetZoom;
+    private Rigidbody2D objectBody;
+    private Camera AttachedCamera;
 
     void Start()
     {
-        
+        objectBody = followObject.GetComponent<Rigidbody2D>();
+        AttachedCamera = GetComponent<Camera>();
+        TargetZoom = MaxZoom;
     }
 
     float LERP(float a, float b, float ratio)
@@ -31,35 +43,83 @@ public class FollowCamera : MonoBehaviour
     {
         if (followObject != null)
         {
-            Rigidbody2D objectBody = followObject.GetComponent<Rigidbody2D>();
+            if (objectBody == null)
+            {
+                objectBody = followObject.GetComponent<Rigidbody2D>();
+            }
             if (objectBody != null)
             {
                 float XOffset = Mathf.Min(1.0f, Mathf.Max(-1.0f, objectBody.velocity.x / XRange));
                 float YOffset = Mathf.Min(1.0f, Mathf.Max(-1.0f, objectBody.velocity.y / YRange));
-                TargetVelocityOffset.x = XOffset * XMultiplier;
-                TargetVelocityOffset.y = YOffset * YMultiplier;
-
-                if (Mathf.Abs(VelocityOffset.x) > Mathf.Abs(TargetVelocityOffset.x))
+                if (Mathf.Abs(XOffset) > MinXOffsetRatio)
                 {
-                    VelocityOffset.x = LERP(TargetVelocityOffset.x, VelocityOffset.x, (OffsetTime - Time.deltaTime * CenteringMultiplierX) / OffsetTime);
+                    TargetVelocityOffset.x = XOffset * XMultiplier;
                 } else
                 {
-                    VelocityOffset.x = LERP(TargetVelocityOffset.x, VelocityOffset.x, (OffsetTime - Time.deltaTime) / OffsetTime);
+                    TargetVelocityOffset.x = 0;
                 }
-                if (Mathf.Abs(VelocityOffset.y) > Mathf.Abs(TargetVelocityOffset.y))
+                if (Mathf.Abs(YOffset) > MinYOffsetRatio)
                 {
-                    VelocityOffset.y = LERP(TargetVelocityOffset.y, VelocityOffset.y, (OffsetTime - Time.deltaTime * CenteringMultiplierX) / OffsetTime);
-                }
-                else
+                    TargetVelocityOffset.y = YOffset * YMultiplier;
+                } else
                 {
-                    VelocityOffset.y = LERP(TargetVelocityOffset.y, VelocityOffset.y, (OffsetTime - Time.deltaTime) / OffsetTime);
+                    TargetVelocityOffset.y = 0;
                 }
-
-                this.transform.position = followObject.transform.position + followDirection + VelocityOffset;
+                float ZoomRatio = Mathf.Max(Mathf.Abs(XOffset), Mathf.Abs(YOffset));
+                if (ZoomRatio > MinZoomRatio)
+                {
+                    TargetZoom = LERP(MaxZoom, MinZoom, ZoomRatio);
+                } else
+                {
+                    TargetZoom = MaxZoom;
+                }
             } else
             {
-                this.transform.position = followObject.transform.position + followDirection;
+                TargetVelocityOffset.x = 0;
+                TargetVelocityOffset.y = 0;
+                TargetZoom = MaxZoom;
             }
+
+            if (Mathf.Abs(VelocityOffset.x) > Mathf.Abs(TargetVelocityOffset.x))
+            {
+                VelocityOffset.x = LERP(TargetVelocityOffset.x, VelocityOffset.x, (OffsetTime - Time.deltaTime * CenteringMultiplierX) / OffsetTime);
+            }
+            else
+            {
+                VelocityOffset.x = LERP(TargetVelocityOffset.x, VelocityOffset.x, (OffsetTime - Time.deltaTime) / OffsetTime);
+            }
+            if (Mathf.Abs(VelocityOffset.y) > Mathf.Abs(TargetVelocityOffset.y))
+            {
+                VelocityOffset.y = LERP(TargetVelocityOffset.y, VelocityOffset.y, (OffsetTime - Time.deltaTime * CenteringMultiplierX) / OffsetTime);
+            }
+            else
+            {
+                VelocityOffset.y = LERP(TargetVelocityOffset.y, VelocityOffset.y, (OffsetTime - Time.deltaTime) / OffsetTime);
+            }
+            
+            if (TargetZoom > AttachedCamera.orthographicSize)
+            {
+                AttachedCamera.orthographicSize = LERP(TargetZoom, AttachedCamera.orthographicSize, (OffsetTime - Time.deltaTime) / OffsetTime);
+            } else
+            {
+                AttachedCamera.orthographicSize = LERP(TargetZoom, AttachedCamera.orthographicSize, (OffsetTime - Time.deltaTime * CenteringMultiplierX) / OffsetTime);
+            }
+            AttachedCamera.transform.position = followObject.transform.position + followDirection + VelocityOffset;
+
+            Vector3 lowerLeft = AttachedCamera.ViewportToWorldPoint(new Vector3(0, 0, 0));
+            Vector3 upperRight = AttachedCamera.ViewportToWorldPoint(new Vector3(1, 1, 0));
+            Rect currentRect = new Rect(lowerLeft.x, lowerLeft.y, upperRight.x - lowerLeft.x, upperRight.y - lowerLeft.y);
+            Rect clampedRect = new Rect(currentRect);
+            float clampedZoom = AttachedCamera.orthographicSize;
+
+            foreach (CameraConstraint constraint in constraints)
+            {
+                constraint.constrainCamera(ref clampedRect);
+            }
+
+            float hardZoomRatio = Mathf.Min(clampedRect.width / currentRect.width, clampedRect.height / currentRect.height);
+            AttachedCamera.transform.position = new Vector3(clampedRect.center.x, clampedRect.center.y, AttachedCamera.transform.position.z);
+            AttachedCamera.orthographicSize = hardZoomRatio * AttachedCamera.orthographicSize;
         }
     }
 }
