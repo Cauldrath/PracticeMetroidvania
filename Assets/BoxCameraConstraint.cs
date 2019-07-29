@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class BoxCameraConstraint : CameraConstraint
 {
-    public bool SoftClampLeft = true;
-    public bool SoftClampRight = true;
-    public bool SoftClampTop = true;
-    public bool SoftClampBottom = true;
-
     public bool HardClampLeft = true;
     public bool HardClampRight = true;
     public bool HardClampTop = true;
     public bool HardClampBottom = true;
+    public float ConstrainObject = 0.0f;
 
     float LERP(float a, float b, float ratio)
     {
@@ -78,6 +74,43 @@ public class BoxCameraConstraint : CameraConstraint
             ClampedRect.xMax = LERP(ClampedRect.xMax, newClampedRect.xMax, ClampRatio);
             ClampedRect.yMin = LERP(ClampedRect.yMin, newClampedRect.yMin, ClampRatio);
             ClampedRect.yMax = LERP(ClampedRect.yMax, newClampedRect.yMax, ClampRatio);
+
+            if (followObject != null && ConstrainObject > 0.0f)
+            {
+                Rigidbody2D body = followObject.GetComponent<Rigidbody2D>();
+                if (followObject.transform.position.x < ClampedRect.xMin + ConstrainObject)
+                {
+                    followObject.transform.position = new Vector3(ClampedRect.xMin + ConstrainObject, followObject.transform.position.y, followObject.transform.position.z);
+                    if (body != null && body.velocity.x < 0)
+                    {
+                        body.velocity = new Vector2(0, body.velocity.y);
+                    }
+                }
+                if (followObject.transform.position.x > ClampedRect.xMax - ConstrainObject)
+                {
+                    followObject.transform.position = new Vector3(ClampedRect.xMax - ConstrainObject, followObject.transform.position.y, followObject.transform.position.z);
+                    if (body != null && body.velocity.x > 0)
+                    {
+                        body.velocity = new Vector2(0, body.velocity.y);
+                    }
+                }
+                if (followObject.transform.position.y < ClampedRect.yMin + ConstrainObject)
+                {
+                    followObject.transform.position = new Vector3(followObject.transform.position.x, ClampedRect.yMin + ConstrainObject, followObject.transform.position.z);
+                    if (body != null && body.velocity.y < 0)
+                    {
+                        body.velocity = new Vector2(body.velocity.x, 0);
+                    }
+                }
+                if (followObject.transform.position.y > ClampedRect.yMax - ConstrainObject)
+                {
+                    followObject.transform.position = new Vector3(followObject.transform.position.x, ClampedRect.yMax - ConstrainObject, followObject.transform.position.z);
+                    if (body != null && body.velocity.y > 0)
+                    {
+                        body.velocity = new Vector2(body.velocity.x, 0);
+                    }
+                }
+            }
         }
     }
 }

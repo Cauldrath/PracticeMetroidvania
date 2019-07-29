@@ -79,7 +79,7 @@ public class PlayerScript : MonoBehaviour
         body = GetComponent<Rigidbody2D>();
         hitbox = GetComponent<BoxCollider2D>();
         animator = GetComponent<Animator>();
-        terrainMask = LayerMask.GetMask("Default", "Hazards", "Enemies");
+        terrainMask = LayerMask.GetMask("Default", "Hazards");
     }
 
     private void OnGUI()
@@ -493,7 +493,7 @@ public class PlayerScript : MonoBehaviour
         }
         else
         {
-            terrainMask = LayerMask.GetMask("Default", "Hazards", "Enemies");
+            terrainMask = LayerMask.GetMask("Default", "Hazards");
         }
 
         body.velocity = new Vector2(horizontalVelocity, verticalVelocity);

@@ -13,9 +13,9 @@ GameObject:
   - component: {fileID: -8187236334564485915}
   - component: {fileID: -3200300682429601318}
   - component: {fileID: -8695280891447684016}
-  - component: {fileID: -1583692178516377379}
   - component: {fileID: 2300179496980877514}
   - component: {fileID: -5722526954098876633}
+  - component: {fileID: -4080373138680325103}
   m_Layer: 9
   m_Name: Crawler
   m_TagString: Enemy
@@ -126,7 +126,7 @@ MonoBehaviour:
   OnTakeDamage:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: -1583692178516377379}
+      - m_Target: {fileID: -4080373138680325103}
         m_MethodName: OnHurt
         m_Mode: 0
         m_Arguments:
@@ -165,18 +165,6 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.8, y: 0.8}
   m_EdgeRadius: 0
---- !u!114 &-1583692178516377379
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8612529696780157339}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a65c7034ce7485249b14d3d79772de34, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &2300179496980877514
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -208,3 +196,15 @@ MonoBehaviour:
   ClingPadding: 0.05
   ClimbDistance: 0.05
   MoveSpeed: 5
+--- !u!114 &-4080373138680325103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8612529696780157339}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a65c7034ce7485249b14d3d79772de34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
