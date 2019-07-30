@@ -62,6 +62,11 @@ public class Damageable : MonoBehaviour
         }
     }
 
+    public bool IsInvincible()
+    {
+        return invincibilityLeft > 0;
+    }
+
     public void Hit(Damager damager)
     {
         DamageTypes currentVulnerabilities = Vulnerabilities;

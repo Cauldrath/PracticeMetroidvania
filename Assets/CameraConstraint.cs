@@ -10,6 +10,7 @@ public class CameraConstraint : MonoBehaviour
     protected Collider2D clampCollider;
     public float TimeToClamp = 1.0f;
     public float TimeToUnclamp = 1.0f;
+    public bool CanClamp = true;
 
     protected float TimeClamped = 0.0f;
     protected float UnclampTimeLeft = 0.0f;
@@ -27,7 +28,7 @@ public class CameraConstraint : MonoBehaviour
         }
         if (clampCollider != null && clampedCamera != null && followObject != null)
         {
-            if (clampCollider.OverlapPoint(followObject.transform.position))
+            if (CanClamp && clampCollider.OverlapPoint(followObject.transform.position))
             {
                 if (UnclampTimeLeft > 0)
                 {
@@ -65,6 +66,16 @@ public class CameraConstraint : MonoBehaviour
                 }
             }
         }
+    }
+
+    public bool isClamped()
+    {
+        return TimeClamped > 0;
+    }
+
+    public bool doneUnclamping()
+    {
+        return UnclampTimeLeft <= 0;
     }
 
     public virtual void constrainCamera(ref Rect ClampedRect)

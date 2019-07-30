@@ -6,47 +6,110 @@ public class EyeBossScript : MonoBehaviour
 {
     public float SlowMoveSpeed = 0.75f;
     public float FastMoveSpeed = 1.5f;
+    public float EyeOpenTime = 2.0f;
+    public float FastEyeOpenTime = 1.5f;
+    public float DeathTime = 5.0f;
 
     private int phase = 0;
+    private float deathTimer = 0;
+    private float EyeOpenDelay = 0;
+    private BoxCameraConstraint constraint;
+    private GameObject Target;
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        constraint = GetComponentInChildren<BoxCameraConstraint>();
+        Target = constraint.followObject;
     }
 
     private void FixedUpdate()
     {
-        float moveSpeed = 0;
-        if (phase == 1)
+        if (constraint && constraint.isClamped() && deathTimer == 0)
         {
-            moveSpeed = SlowMoveSpeed;
-        } else if (phase == 2)
-        {
-            moveSpeed = FastMoveSpeed;
+            float moveSpeed = SlowMoveSpeed;
+            if (phase == 2)
+            {
+                moveSpeed = FastMoveSpeed;
+            }
+            transform.position = new Vector3(transform.position.x + moveSpeed * Time.deltaTime, transform.position.y, transform.position.z);
         }
-        transform.position = new Vector3(transform.position.x + moveSpeed * Time.deltaTime, transform.position.y, transform.position.z);
+    }
+
+    private static bool Unopened(BossEyeScript eye)
+    {
+        return !eye.IsOpen() && eye.gameObject.activeSelf;
     }
 
     void Update()
     {
-        int totalHealth = 0;
-        Damageable[] Eyes = GetComponentsInChildren<Damageable>();
-        foreach(Damageable Eye in Eyes)
+        if (constraint)
         {
-            totalHealth += Eye.Health;
-        }
-        if (totalHealth <= 20)
-        {
-            phase = 1;
-        }
-        if (totalHealth <= 10)
-        {
-            phase = 2;
-        }
-        if (totalHealth == 0)
-        {
-            Destroy(this.gameObject);
+            if (deathTimer > 0)
+            {
+                SpriteRenderer sprite = GetComponent<SpriteRenderer>();
+                sprite.color = new Color(1, 1, 1, deathTimer / DeathTime);
+                deathTimer -= Time.deltaTime;
+                if (deathTimer <= constraint.TimeToUnclamp)
+                {
+                    constraint.CanClamp = false;
+                    if (deathTimer <= 0)
+                    {
+                        Destroy(this.gameObject);
+                    }
+                }
+            }
+            else if (constraint.isClamped())
+            {
+                int totalHealth = 0;
+                int maxHealth = 0;
+                List<BossEyeScript> Eyes = new List<BossEyeScript>();
+                GetComponentsInChildren<BossEyeScript>(true, Eyes);
+                foreach (BossEyeScript Eye in Eyes)
+                {
+                    Damageable EyeHealth = Eye.GetComponent<Damageable>();
+                    totalHealth += EyeHealth.Health;
+                    maxHealth += EyeHealth.MaxHealth;
+                }
+                if (totalHealth == 0)
+                {
+                    deathTimer = DeathTime;
+                    EyeBossClawScript claw = GetComponentInChildren<EyeBossClawScript>();
+                    if (claw)
+                    {
+                        claw.gameObject.SetActive(false);
+                    }
+                    GetComponent<Damager>().enabled = false;
+                }
+                else
+                {
+                    if (totalHealth <= maxHealth * 2 / 3)
+                    {
+                        phase = 1;
+                        EyeBossClawScript claw = GetComponentInChildren<EyeBossClawScript>(true);
+                        if (claw)
+                        {
+                            claw.gameObject.SetActive(true);
+                        }
+                    }
+                    if (totalHealth <= maxHealth / 3)
+                    {
+                        phase = 2;
+                    }
+                    EyeOpenDelay += Time.deltaTime;
+                    if ((phase == 2 && EyeOpenDelay > FastEyeOpenTime) || EyeOpenDelay > EyeOpenTime)
+                    {
+                        List<BossEyeScript> ActiveEyes = Eyes.FindAll(Unopened);
+                        if (ActiveEyes.Count > 0)
+                        {
+                            BossEyeScript EyeToOpen = ActiveEyes[Mathf.FloorToInt(Random.value * ActiveEyes.Count)];
+                            EyeToOpen.Target = Target;
+                            EyeToOpen.Open();
+                            EyeOpenDelay = 0;
+                        }
+                    }
+                }
+            }
         }
     }
 }

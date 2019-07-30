@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Destroyable : MonoBehaviour
 {
+    public bool DestroyOnDeath = true;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -20,7 +22,13 @@ public class Destroyable : MonoBehaviour
     {
         if (damageable.Health <= 0)
         {
-            Destroy(this.gameObject);
+            if (DestroyOnDeath)
+            {
+                Destroy(this.gameObject);
+            } else
+            {
+                this.gameObject.SetActive(false);
+            }
         }
     }
 }

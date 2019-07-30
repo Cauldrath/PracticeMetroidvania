@@ -19,6 +19,10 @@ public class Scrollable : MonoBehaviour
     void Start()
     {
         m_Renderer = GetComponent<Renderer>();
+        if (viewCamera == null)
+        {
+            viewCamera = Camera.current;
+        }
     }
 
     public void setSpawner(ScrollSpawner newSpawner)
