@@ -80,6 +80,7 @@ public class PlayerScript : MonoBehaviour
         hitbox = GetComponent<BoxCollider2D>();
         animator = GetComponent<Animator>();
         terrainMask = LayerMask.GetMask("Default", "Hazards");
+        Cursor.visible = false;
     }
 
     private void OnGUI()
