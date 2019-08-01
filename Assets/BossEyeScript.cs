@@ -6,6 +6,7 @@ public class BossEyeScript : MonoBehaviour
 {
     public GameObject Shot;
     public GameObject Target;
+    public Camera ViewCamera;
 
     public float OpenTime = 2.0f;
     public float ShotSpeed = 7.0f;
@@ -48,6 +49,11 @@ public class BossEyeScript : MonoBehaviour
                     {
                         shotBody.velocity = new Vector3(ShotSpeed, 0, 0);
                     }
+                }
+                Scrollable scrollable = newShot.GetComponent<Scrollable>();
+                if (scrollable)
+                {
+                    scrollable.viewCamera = ViewCamera;
                 }
                 ShotsFired++;
             }

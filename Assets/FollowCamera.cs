@@ -20,12 +20,12 @@ public class FollowCamera : MonoBehaviour
     public float MinYOffsetRatio = 0.25f;
     public float HardClampTime = 1.0f;
     public List<CameraConstraint> constraints = new List<CameraConstraint>();
+    public Camera AttachedCamera;
 
     private Vector3 VelocityOffset = new Vector3(0, 0, 0);
     private Vector3 TargetVelocityOffset = new Vector3(0, 0, 0);
     private float TargetZoom;
     private Rigidbody2D objectBody;
-    private Camera AttachedCamera;
 
     void Start()
     {

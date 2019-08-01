@@ -39,6 +39,7 @@ public class EyeBossScript : MonoBehaviour
             Damageable EyeHealth = Eye.GetComponent<Damageable>();
             maxHealth += EyeHealth.MaxHealth;
             EyeHealths.Add(EyeHealth);
+            Eye.ViewCamera = constraint.clampedCamera.AttachedCamera;
         }
     }
 
