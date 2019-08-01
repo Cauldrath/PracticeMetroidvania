@@ -12,7 +12,8 @@ public enum DamageTypes
     Projectile = 16,
     ProjectileDestroyer = 32,
     Explosive = 64,
-    Ice = 128
+    Ice = 128,
+    Electric = 256
 }
 
 public enum Factions

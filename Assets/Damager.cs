@@ -1,9 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Damager : MonoBehaviour
 {
+    [System.Serializable]
+    public class DamageEvent : UnityEvent<Damager, Damageable>
+    { }
+
     [EnumFlag]
     public DamageTypes DamageType = DamageTypes.Collision;
     [EnumFlag]
@@ -11,6 +16,7 @@ public class Damager : MonoBehaviour
     public int damage = 1;
     public bool active = true;
     public Collider2D damageCollider;
+    public DamageEvent OnDamage;
 
     // Start is called before the first frame update
     void Start()
@@ -32,6 +38,7 @@ public class Damager : MonoBehaviour
                     if ((damageable.DamagedByFaction & FactionDamage) != 0)
                     {
                         damageable.Hit(this);
+                        OnDamage.Invoke(this, damageable);
                     }
                 }
             }

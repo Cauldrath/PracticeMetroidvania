@@ -40,6 +40,8 @@ public class PlayerScript : MonoBehaviour
     public Damager downStab;
     public Damager uppercut;
     public Damager currentMelee;
+    [EnumFlag]
+    public DamageTypes absorbableTypes = DamageTypes.Fire | DamageTypes.Ice | DamageTypes.Electric | DamageTypes.Explosive;
 
     public bool canAirDash = false;
     public bool canDownStab = false;
@@ -47,7 +49,6 @@ public class PlayerScript : MonoBehaviour
     public bool canEnergyAbsorb = false;
     public bool canWallClimb = false;
     public bool canUppercut = false;
-
 
     private Rigidbody2D body;
     private BoxCollider2D hitbox;
@@ -512,6 +513,27 @@ public class PlayerScript : MonoBehaviour
 
     void Update()
     {
+        // Do this every update just so it works with the editor
+        if (canEnergyAbsorb)
+        {
+            groundMelee.DamageType |= DamageTypes.ProjectileDestroyer;
+            jumpMelee.DamageType |= DamageTypes.ProjectileDestroyer;
+        } else
+        {
+            groundMelee.DamageType &= ~DamageTypes.ProjectileDestroyer;
+            jumpMelee.DamageType &= ~DamageTypes.ProjectileDestroyer;
+        }
+        if (energyAbsorbLeft > 0)
+        {
+            energyAbsorbLeft -= Time.deltaTime;
+            groundMelee.DamageType |= energyAbsorbed;
+            jumpMelee.DamageType |= energyAbsorbed;
+        }
+        else
+        {
+            groundMelee.DamageType &= ~absorbableTypes;
+            jumpMelee.DamageType &= ~absorbableTypes;
+        }
         if (knockbackLeft == 0)
         {
             if (Input.GetButtonUp("Jump"))
@@ -664,5 +686,15 @@ public class PlayerScript : MonoBehaviour
             knockbackLeft = -knockbackDuration;
         }
         body.velocity = new Vector2(body.velocity.x, knockbackPopup);
+    }
+
+    public void OnHit(Damager damager, Damageable damageable)
+    {
+        if ((damageable.Vulnerabilities & DamageTypes.ProjectileDestroyer) != 0)
+        {
+            Damager shotDamage = damageable.GetComponent<Damager>();
+            energyAbsorbed = absorbableTypes & shotDamage.DamageType;
+            energyAbsorbLeft = energyAbsorbDuration;
+        }
     }
 }
