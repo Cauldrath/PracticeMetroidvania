@@ -15,12 +15,31 @@ public class EyeBossScript : MonoBehaviour
     private float EyeOpenDelay = 0;
     private BoxCameraConstraint constraint;
     private GameObject Target;
+    private EyeBossClawScript claw;
+    private SpriteRenderer sprite;
+    private List<BossEyeScript> Eyes;
+    private Damager damager;
+    private int maxHealth;
+    private List<Damageable> EyeHealths;
 
     // Start is called before the first frame update
     void Start()
     {
         constraint = GetComponentInChildren<BoxCameraConstraint>();
         Target = constraint.followObject;
+        claw = GetComponentInChildren<EyeBossClawScript>(true);
+        sprite = GetComponent<SpriteRenderer>();
+        Eyes = new List<BossEyeScript>();
+        GetComponentsInChildren<BossEyeScript>(true, Eyes);
+        damager = GetComponent<Damager>();
+        EyeHealths = new List<Damageable>();
+
+        foreach (BossEyeScript Eye in Eyes)
+        {
+            Damageable EyeHealth = Eye.GetComponent<Damageable>();
+            maxHealth += EyeHealth.MaxHealth;
+            EyeHealths.Add(EyeHealth);
+        }
     }
 
     private void FixedUpdate()
@@ -47,7 +66,6 @@ public class EyeBossScript : MonoBehaviour
         {
             if (deathTimer > 0)
             {
-                SpriteRenderer sprite = GetComponent<SpriteRenderer>();
                 sprite.color = new Color(1, 1, 1, deathTimer / DeathTime);
                 deathTimer -= Time.deltaTime;
                 if (deathTimer <= constraint.TimeToUnclamp)
@@ -62,31 +80,24 @@ public class EyeBossScript : MonoBehaviour
             else if (constraint.isClamped())
             {
                 int totalHealth = 0;
-                int maxHealth = 0;
-                List<BossEyeScript> Eyes = new List<BossEyeScript>();
-                GetComponentsInChildren<BossEyeScript>(true, Eyes);
-                foreach (BossEyeScript Eye in Eyes)
+                foreach (Damageable EyeHealth in EyeHealths)
                 {
-                    Damageable EyeHealth = Eye.GetComponent<Damageable>();
                     totalHealth += EyeHealth.Health;
-                    maxHealth += EyeHealth.MaxHealth;
                 }
                 if (totalHealth == 0)
                 {
                     deathTimer = DeathTime;
-                    EyeBossClawScript claw = GetComponentInChildren<EyeBossClawScript>();
                     if (claw)
                     {
                         claw.gameObject.SetActive(false);
                     }
-                    GetComponent<Damager>().enabled = false;
+                    damager.enabled = false;
                 }
                 else
                 {
                     if (totalHealth <= maxHealth * 2 / 3)
                     {
                         phase = 1;
-                        EyeBossClawScript claw = GetComponentInChildren<EyeBossClawScript>(true);
                         if (claw)
                         {
                             claw.gameObject.SetActive(true);
