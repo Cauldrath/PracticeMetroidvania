@@ -1,5 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
 public class PlayerScript : MonoBehaviour
@@ -34,7 +37,7 @@ public class PlayerScript : MonoBehaviour
     public float wallClimbFastFallSpeed = 0.5f;
     public float wallClimbTerminalVelocity = 5.0f;
     public float wallClimbFastTerminalVelocity = 10.0f;
-    public Damageable damageable;
+    public GameObject explosion;
     public Damager groundMelee;
     public Damager jumpMelee;
     public Damager downStab;
@@ -43,17 +46,15 @@ public class PlayerScript : MonoBehaviour
     [EnumFlag]
     public DamageTypes absorbableTypes = DamageTypes.Fire | DamageTypes.Ice | DamageTypes.Electric | DamageTypes.Explosive;
 
-    public bool canAirDash = false;
-    public bool canDownStab = false;
-    public bool canHighJump = false;
-    public bool canEnergyAbsorb = false;
-    public bool canWallClimb = false;
-    public bool canUppercut = false;
+    public SavedGame saveData = new SavedGame();
+    public int saveSlot = 0;
+    public List<GameObject> savePoints = new List<GameObject>();
 
     private Rigidbody2D body;
     private BoxCollider2D hitbox;
     private Animator animator;
     private LayerMask terrainMask;
+    private Damageable damageable;
 
     private float jumpLeft = 0.0f;
     private float offGroundTime = 0.0f;
@@ -75,13 +76,68 @@ public class PlayerScript : MonoBehaviour
     private bool onGround = false;
     private bool fastFalling = false;
 
+    public void SaveGame()
+    {
+        FileStream file = null;
+
+        try
+        {
+            BinaryFormatter bf = new BinaryFormatter();
+            file = File.Create(Application.persistentDataPath + "/save" + saveSlot + ".dat");
+            bf.Serialize(file, saveData);
+        } catch(Exception e) {
+            if (e != null)
+            {
+                // unable to save
+            }
+        } finally
+        {
+            if (file != null)
+            {
+                file.Close();
+            }
+        }
+    }
+
+    public void LoadGame(int slot)
+    {
+        FileStream file = null;
+
+        try
+        {
+            BinaryFormatter bf = new BinaryFormatter();
+            file = File.Open(Application.persistentDataPath + "/save" + slot + ".dat", FileMode.Open);
+            saveData = (SavedGame)bf.Deserialize(file);
+            if (savePoints.Count > saveData.savedPoint)
+            {
+                transform.position = savePoints[saveData.savedPoint].gameObject.transform.position;
+            }
+            damageable.Health = damageable.MaxHealth;
+        }
+        catch (Exception e)
+        {
+            if (e != null)
+            {
+                // unable to load
+            }
+        }
+        finally
+        {
+            file.Close();
+        }
+        maxJumps = saveData.hasDoubleJump ? 2 : 1;
+
+    }
+
     void Start()
     {
         body = GetComponent<Rigidbody2D>();
         hitbox = GetComponent<BoxCollider2D>();
         animator = GetComponent<Animator>();
         terrainMask = LayerMask.GetMask("Default", "Hazards");
+        damageable = GetComponent<Damageable>();
         Cursor.visible = false;
+        LoadGame(saveSlot);
     }
 
     private void OnGUI()
@@ -94,38 +150,53 @@ public class PlayerScript : MonoBehaviour
         {
             if (collision.gameObject.name.StartsWith("Jump Power Up"))
             {
-                maxJumps++;
+                maxJumps=2;
+                saveData.hasDoubleJump = true;
                 collision.gameObject.SetActive(false);
+                SaveGame();
             }
             if (collision.gameObject.name.StartsWith("Air Dash Power Up"))
             {
-                canAirDash = true;
+                saveData.hasAirDash = true;
                 collision.gameObject.SetActive(false);
+                SaveGame();
             }
             if (collision.gameObject.name.StartsWith("Down Stab Power Up"))
             {
-                canDownStab = true;
+                saveData.hasDownStab = true;
                 collision.gameObject.SetActive(false);
+                SaveGame();
             }
             if (collision.gameObject.name.StartsWith("High Jump Power Up"))
             {
-                canHighJump = true;
+                saveData.hasHighJump = true;
                 collision.gameObject.SetActive(false);
+                SaveGame();
             }
             if (collision.gameObject.name.StartsWith("Energy Absorb Power Up"))
             {
-                canEnergyAbsorb = true;
+                saveData.hasEnergyAbsorb = true;
                 collision.gameObject.SetActive(false);
+                SaveGame();
             }
             if (collision.gameObject.name.StartsWith("Wall Climb Power Up"))
             {
-                canWallClimb = true;
+                saveData.hasWallClimb = true;
                 collision.gameObject.SetActive(false);
+                SaveGame();
             }
             if (collision.gameObject.name.StartsWith("Uppercut Power Up"))
             {
-                canUppercut = true;
+                saveData.hasUppercut = true;
                 collision.gameObject.SetActive(false);
+                SaveGame();
+            }
+            int savePointIndex = savePoints.IndexOf(collision.gameObject);
+            if (savePointIndex != -1)
+            {
+                saveData.savedPoint = savePointIndex;
+                damageable.Health = damageable.MaxHealth;
+                SaveGame();
             }
         }
     }
@@ -170,9 +241,9 @@ public class PlayerScript : MonoBehaviour
                     }
                     offGroundTime = 0.0f;
                     dashJumping = false;
-                    if (downstabDuration >= downstabChargeTime)
+                    if (downstabDuration >= downstabChargeTime && explosion != null)
                     {
-                        // TODO: Spawn charged downstab explosion
+                        GameObject.Instantiate(explosion, transform.position, Quaternion.identity);
                     }
                     downstabDuration = 0.0f;
                     isDownstabbing = false;
@@ -355,11 +426,12 @@ public class PlayerScript : MonoBehaviour
             {
                 horizontalVelocity = 0;
                 EndDash();
-                if (canWallClimb && !onGround && jumpLeft <= 0 && !wallClimbing)
+                if (saveData.hasWallClimb && !onGround && jumpLeft <= 0 && !wallClimbing)
                 {
                     wallClimbing = true;
                     EndAttack();
                     EndDash();
+                    downstabDuration = 0.0f;
                     isUppercutting = false;
                     currentMelee.active = false;
                 }
@@ -514,7 +586,7 @@ public class PlayerScript : MonoBehaviour
     void Update()
     {
         // Do this every update just so it works with the editor
-        if (canEnergyAbsorb)
+        if (saveData.hasEnergyAbsorb)
         {
             groundMelee.DamageType |= DamageTypes.ProjectileDestroyer;
             jumpMelee.DamageType |= DamageTypes.ProjectileDestroyer;
@@ -553,7 +625,7 @@ public class PlayerScript : MonoBehaviour
                 // If this is your first jump off the ground
                 if (jumpsLeft == maxJumps - 1)
                 {
-                    if (canHighJump && !wallClimbing && Input.GetAxis("Vertical") > 0)
+                    if (saveData.hasHighJump && !wallClimbing && Input.GetAxis("Vertical") > 0)
                     {
                         jumpLeft = highJumpTime;
                         highJumping = true;
@@ -579,7 +651,7 @@ public class PlayerScript : MonoBehaviour
                 {
                     dashLeft = groundDashTime;
                 }
-                else if (jumpsLeft > 0 && maxJumps > 1 && canAirDash)
+                else if (jumpsLeft > 0 && maxJumps > 1 && saveData.hasAirDash)
                 {
                     // Air dash
                     dashLeft = airDashTime;
@@ -615,7 +687,7 @@ public class PlayerScript : MonoBehaviour
                 currentMelee.active = false;
                 if (onGround)
                 {
-                    if (canUppercut && Input.GetAxis("Vertical") > 0)
+                    if (saveData.hasUppercut && Input.GetAxis("Vertical") > 0)
                     {
                         // Uppercut
                         isUppercutting = true;
@@ -631,7 +703,7 @@ public class PlayerScript : MonoBehaviour
                 }
                 else
                 {
-                    if (canDownStab && Input.GetAxis("Vertical") < 0)
+                    if (saveData.hasDownStab && Input.GetAxis("Vertical") < 0)
                     {
                         // Downstab
                         isDownstabbing = true;
@@ -671,7 +743,10 @@ public class PlayerScript : MonoBehaviour
 
     public void OnHurt(Damager damager, Damageable damageable)
     {
-        Debug.Log("Took " + damager.damage + " damage");
+        if (damageable.Health <= 0)
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+        }
         jumpLeft = 0;
         EndAttack();
         EndDash();
