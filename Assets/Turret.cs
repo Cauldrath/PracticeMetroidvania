@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Turret : MonoBehaviour
+public class Turret : EnemyScript
 {
     public GameObject Shot;
-    public GameObject Target;
-    public Camera ViewCamera;
     public float ShotDelay = 2.0f;
     public float ShotSpeed = 7.0f;
 

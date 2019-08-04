@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Crawler : MonoBehaviour
+public class Crawler : EnemyScript
 {
     public bool MoveClockwise = true;
     public float ClingDistance = 1.0f;

@@ -74,6 +74,11 @@ public class EyeBossScript : MonoBehaviour
                     constraint.CanClamp = false;
                     if (deathTimer <= 0)
                     {
+                        PlayerScript player = Target.GetComponent<PlayerScript>();
+                        if (player)
+                        {
+                            player.SetBossDeath(0);
+                        }
                         Destroy(this.gameObject);
                     }
                 }

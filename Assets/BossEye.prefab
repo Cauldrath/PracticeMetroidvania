@@ -60,6 +60,7 @@ SpriteRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -95,8 +96,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7687fecacaaeb7c48b5968ac7128e40e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxHealth: 4
-  Health: 4
+  MaxHealth: 1
+  Health: 1
   Vulnerabilities: 223
   invincibilityTime: 1
   InvincibleVulnerabilities: 0
@@ -172,6 +173,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Shot: {fileID: 1205229217549966855, guid: a6fd66c5327cfca4390727d35baeba84, type: 3}
   Target: {fileID: 0}
+  ViewCamera: {fileID: 0}
   OpenTime: 3
   ShotSpeed: 3
   NumberOfShots: 1
