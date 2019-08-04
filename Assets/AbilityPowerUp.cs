@@ -7,10 +7,12 @@ public class AbilityPowerUp : MonoBehaviour
     public string title;
     public string description;
     public string abilityFieldName;
+    public float tipDelay = 1.0f;
     public PlayerScript player;
 
     private System.Reflection.FieldInfo abilityField;
     private bool showTip = false;
+    private float tipStart = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -49,7 +51,7 @@ public class AbilityPowerUp : MonoBehaviour
     {
         if (showTip)
         {
-            if (Input.GetButtonDown("Submit"))
+            if (Input.GetButtonDown("Submit") && Time.unscaledTime >= tipStart + tipDelay)
             {
                 showTip = false;
                 Time.timeScale = 1;
@@ -74,6 +76,7 @@ public class AbilityPowerUp : MonoBehaviour
         {
             abilityField.SetValue(player.saveData, true);
             showTip = true;
+            tipStart = Time.unscaledTime;
             Time.timeScale = 0;
             player.SaveGame();
         }

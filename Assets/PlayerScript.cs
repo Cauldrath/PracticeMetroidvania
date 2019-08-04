@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
 public class PlayerScript : MonoBehaviour
@@ -47,7 +44,6 @@ public class PlayerScript : MonoBehaviour
     public DamageTypes absorbableTypes = DamageTypes.Fire | DamageTypes.Ice | DamageTypes.Electric | DamageTypes.Explosive;
 
     public SavedGame saveData = new SavedGame();
-    public int saveSlot = 0;
     public List<GameObject> savePoints = new List<GameObject>();
     public List<GameObject> bosses = new List<GameObject>();
 
@@ -79,62 +75,27 @@ public class PlayerScript : MonoBehaviour
 
     public void SaveGame()
     {
-        FileStream file = null;
-
-        try
-        {
-            BinaryFormatter bf = new BinaryFormatter();
-            file = File.Create(Application.persistentDataPath + "/save" + saveSlot + ".dat");
-            bf.Serialize(file, saveData);
-        } catch(Exception e) {
-            if (e != null)
-            {
-                // unable to save
-            }
-        } finally
-        {
-            if (file != null)
-            {
-                file.Close();
-            }
-        }
+        SavedGame.SaveGame(saveData, SavedGame.saveSlot);
     }
 
-    public void LoadGame(int slot)
+    public void LoadGame()
     {
-        FileStream file = null;
-
-        try
+        saveData = SavedGame.LoadGame(SavedGame.saveSlot);
+        if (saveData == null)
         {
-            BinaryFormatter bf = new BinaryFormatter();
-            file = File.Open(Application.persistentDataPath + "/save" + slot + ".dat", FileMode.Open);
-            saveData = (SavedGame)bf.Deserialize(file);
-            if (savePoints.Count > saveData.savedPoint)
-            {
-                transform.position = savePoints[saveData.savedPoint].gameObject.transform.position;
-            }
-            damageable.Health = damageable.MaxHealth;
-            for (int bossIndex = 0; bossIndex < saveData.bossesKilled.Count; bossIndex++)
-            {
-                if (saveData.bossesKilled[bossIndex] && bosses.Count > bossIndex)
-                {
-
-                    Destroy(bosses[bossIndex].gameObject);                    
-                }
-            }
+            saveData = new SavedGame();
         }
-        catch (Exception e)
+        if (savePoints.Count > saveData.savedPoint)
         {
-            if (e != null)
-            {
-                // unable to load
-            }
+            transform.position = savePoints[saveData.savedPoint].gameObject.transform.position;
         }
-        finally
+        damageable.Health = damageable.MaxHealth;
+        for (int bossIndex = 0; bossIndex < saveData.bossesKilled.Count; bossIndex++)
         {
-            if (file != null)
+            if (saveData.bossesKilled[bossIndex] && bosses.Count > bossIndex)
             {
-                file.Close();
+
+                Destroy(bosses[bossIndex].gameObject);
             }
         }
         maxJumps = saveData.hasDoubleJump ? 2 : 1;
@@ -148,7 +109,7 @@ public class PlayerScript : MonoBehaviour
         terrainMask = LayerMask.GetMask("Default", "Hazards");
         damageable = GetComponent<Damageable>();
         Cursor.visible = false;
-        LoadGame(saveSlot);
+        LoadGame();
         while (saveData.bossesKilled.Count < bosses.Count)
         {
             saveData.bossesKilled.Add(false);
