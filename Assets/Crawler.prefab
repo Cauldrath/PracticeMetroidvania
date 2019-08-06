@@ -62,6 +62,7 @@ SpriteRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -103,6 +104,11 @@ MonoBehaviour:
   damage: 1
   active: 1
   damageCollider: {fileID: -8695280891447684016}
+  OnDamage:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: Damager+DamageEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
 --- !u!114 &-3200300682429601318
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -191,10 +197,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b496ccd0dba01a4aa292691ce84a1c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Target: {fileID: 0}
+  ViewCamera: {fileID: 0}
   MoveClockwise: 1
   ClingDistance: 1
-  ClingPadding: 0.05
-  ClimbDistance: 0.05
+  ClingPadding: 0.1
+  ClimbDistance: 0.1
   MoveSpeed: 5
 --- !u!114 &-4080373138680325103
 MonoBehaviour:
@@ -208,3 +216,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a65c7034ce7485249b14d3d79772de34, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  DestroyOnDeath: 1

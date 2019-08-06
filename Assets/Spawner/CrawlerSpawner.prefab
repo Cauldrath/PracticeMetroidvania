@@ -15,9 +15,9 @@ MonoBehaviour:
   Target: {fileID: 0}
   ViewCamera: {fileID: 0}
   MoveClockwise: 1
-  ClingDistance: 1
-  ClingPadding: 0.04
-  ClimbDistance: 0.04
+  ClingDistance: 0.3
+  ClingPadding: 0.1
+  ClimbDistance: 0.1
   MoveSpeed: 5
 --- !u!1001 &9074001761502655592
 PrefabInstance:

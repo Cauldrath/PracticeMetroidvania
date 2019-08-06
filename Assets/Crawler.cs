@@ -22,9 +22,9 @@ public class Crawler : EnemyScript
     void FixedUpdate()
     {
         float downAngle = transform.rotation.eulerAngles.z * Mathf.Deg2Rad;
-        Vector2 downVector = new Vector2(-Mathf.Sin(downAngle), -Mathf.Cos(downAngle));
+        Vector2 downVector = new Vector2(Mathf.Sin(downAngle), -Mathf.Cos(downAngle));
         float walkAngle = (transform.rotation.eulerAngles.z + (MoveClockwise ? 90 : -90)) * Mathf.Deg2Rad;
-        Vector2 walkVector = new Vector2(Mathf.Sin(walkAngle), Mathf.Cos(walkAngle));
+        Vector2 walkVector = new Vector2(Mathf.Sin(walkAngle), -Mathf.Cos(walkAngle));
 
         Vector2[] m_RaycastPositions = new Vector2[2];
         Vector2 raycastStart = new Vector2(transform.position.x + hitbox.offset.x, transform.position.y + hitbox.offset.y);
@@ -45,11 +45,11 @@ public class Crawler : EnemyScript
             transform.position = new Vector3(transform.position.x + ClingVector.x, transform.position.y + ClingVector.y, transform.position.z);
 
             walkVector = downVector * -1;
-            transform.rotation = Quaternion.AngleAxis(transform.rotation.eulerAngles.z + (MoveClockwise ? -90 : 90), new Vector3(0, 0, 1));
+            transform.rotation = Quaternion.AngleAxis(transform.rotation.eulerAngles.z + (MoveClockwise ? 90 : -90), new Vector3(0, 0, 1));
         }
         else
         {
-            hit = Physics2D.Raycast(m_RaycastPositions[0], downVector, ClingDistance, terrainMask);
+            hit = Physics2D.Raycast(m_RaycastPositions[1], downVector, ClingDistance, terrainMask);
             if (hit.collider == null)
             {
                 // Nothing below you to the left
@@ -58,7 +58,10 @@ public class Crawler : EnemyScript
                 {
                     // Nothing below you to the right, so rotate
                     walkVector = downVector;
-                    transform.rotation = Quaternion.AngleAxis(transform.rotation.eulerAngles.z + (MoveClockwise ? 90 : -90), new Vector3(0, 0, 1));
+                    transform.rotation = Quaternion.AngleAxis(transform.rotation.eulerAngles.z + (MoveClockwise ? -90 : 90), new Vector3(0, 0, 1));
+                    // Move it the distance of the cling padding so it winds up on the new surface
+                    Vector2 ClingVector = ClingPadding * walkVector;
+                    transform.position = new Vector3(transform.position.x + ClingVector.x, transform.position.y + ClingVector.y, transform.position.z);
                 }
                 else
                 {

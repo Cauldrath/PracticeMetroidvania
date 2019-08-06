@@ -17,6 +17,7 @@ public class PlayerScript : MonoBehaviour
     public float dashSpeed = 10.0f;
     public float airDashTime = 1.5f;
     public float groundDashTime = 1.5f;
+    public float bounceTolerance = 0.01f;
     public float groundedRaycastDistance = 0.02f;
     public float ceilingRaycastDistance = 0.1f;
     public float wallRaycastDistance = 0.02f;
@@ -143,13 +144,13 @@ public class PlayerScript : MonoBehaviour
         onGround = false;
         if (jumpLeft <= 0 && !isAirDashing && !ceilingClinging)
         {
-            if (body.velocity.y <= 0)
+            if (body.velocity.y <= bounceTolerance)
             {
                 // Check to see if you are on the ground
                 Vector2[] m_RaycastPositions = new Vector2[3];
 
                 Vector2 raycastDirection = Vector2.down;
-                Vector2 raycastStartBottomCenter = raycastStart + Vector2.down * (hitbox.size.y - groundedRaycastDistance);
+                Vector2 raycastStartBottomCenter = raycastStart + Vector2.down * (hitbox.size.y * 0.5f);
 
                 m_RaycastPositions[0] = raycastStartBottomCenter + Vector2.left * hitbox.size.x * 0.5f;
                 m_RaycastPositions[1] = raycastStartBottomCenter;
@@ -157,7 +158,7 @@ public class PlayerScript : MonoBehaviour
 
                 for (int i = 0; i < m_RaycastPositions.Length; i++)
                 {
-                    RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, groundedRaycastDistance * 2, terrainMask);
+                    RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, groundedRaycastDistance, terrainMask);
                     if (hit.collider != null)
                     {
                         onGround = true;
@@ -194,6 +195,9 @@ public class PlayerScript : MonoBehaviour
                         EndDash();
                     }
                 }
+            } else
+            {
+                offGroundTime = jumpForgiveness;
             }
         }
         else
