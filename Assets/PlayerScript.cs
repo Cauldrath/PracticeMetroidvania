@@ -35,6 +35,7 @@ public class PlayerScript : MonoBehaviour
     public float wallClimbFastFallSpeed = 0.5f;
     public float wallClimbTerminalVelocity = 5.0f;
     public float wallClimbFastTerminalVelocity = 10.0f;
+    public int maxHealthBarSize = 20;
     public GameObject explosion;
     public Damager groundMelee;
     public Damager jumpMelee;
@@ -47,6 +48,7 @@ public class PlayerScript : MonoBehaviour
     public SavedGame saveData = new SavedGame();
     public List<GameObject> savePoints = new List<GameObject>();
     public List<GameObject> bosses = new List<GameObject>();
+    public UnityEngine.UI.Image healthImage; 
 
     private Rigidbody2D body;
     private BoxCollider2D hitbox;
@@ -177,7 +179,7 @@ public class PlayerScript : MonoBehaviour
                     dashJumping = false;
                     if (downstabDuration >= downstabChargeTime && explosion != null)
                     {
-                        GameObject.Instantiate(explosion, transform.position + Vector3.down * hitbox.size.y, Quaternion.identity);
+                        GameObject.Instantiate(explosion, transform.position + Vector3.down * hitbox.size.y + Vector3.right * transform.localScale.x * hitbox.size.x, Quaternion.identity);
                     }
                     downstabDuration = 0.0f;
                     isDownstabbing = false;
@@ -550,6 +552,12 @@ public class PlayerScript : MonoBehaviour
             groundMelee.DamageType &= ~absorbableTypes;
             jumpMelee.DamageType &= ~absorbableTypes;
         }
+
+        if (healthImage)
+        {
+            healthImage.fillAmount = (float)damageable.Health / maxHealthBarSize;
+        }
+
         if (knockbackLeft == 0)
         {
             if (Input.GetButtonUp("Jump"))
@@ -569,7 +577,7 @@ public class PlayerScript : MonoBehaviour
                 // If this is your first jump off the ground
                 if (jumpsLeft == maxJumps - 1)
                 {
-                    if (saveData.hasHighJump && !wallClimbing && Input.GetAxis("Vertical") > 0)
+                    if (saveData.hasHighJump && !wallClimbing && ((Input.GetAxis("Vertical") > 0 && dashLeft > 0) || Input.GetAxis("Vertical") > 0.5))
                     {
                         jumpLeft = highJumpTime;
                         highJumping = true;
@@ -631,7 +639,7 @@ public class PlayerScript : MonoBehaviour
                 currentMelee.active = false;
                 if (onGround)
                 {
-                    if (saveData.hasUppercut && Input.GetAxis("Vertical") > 0)
+                    if (saveData.hasUppercut && Input.GetAxis("Vertical") > 0.5f)
                     {
                         // Uppercut
                         isUppercutting = true;
@@ -647,7 +655,7 @@ public class PlayerScript : MonoBehaviour
                 }
                 else
                 {
-                    if (saveData.hasDownStab && Input.GetAxis("Vertical") < 0)
+                    if (saveData.hasDownStab && Input.GetAxis("Vertical") < -0.5f)
                     {
                         // Downstab
                         isDownstabbing = true;

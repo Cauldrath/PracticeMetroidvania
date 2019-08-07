@@ -37,13 +37,13 @@ public class AbilityPowerUp : MonoBehaviour
     {
         if (showTip)
         {
-            GUI.ModalWindow(0, new Rect(100, 100, 300, 200), windowFunc, title);
+            GUI.ModalWindow(0, new Rect(Screen.width * 0.2f, Screen.height * 0.2f, Screen.width * 0.6f, Screen.height * 0.6f), windowFunc, title);
         }
     }
 
     private void windowFunc(int id)
     {
-        GUI.Label(new Rect(10, 20, 280, 190), description);
+        GUI.Label(new Rect(10, 20, Screen.width * 0.6f - 10, Screen.height * 0.6f - 10), description);
     }
 
     // Update is called once per frame
