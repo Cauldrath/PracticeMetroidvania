@@ -2,12 +2,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum LockPosition
+{
+    None,
+    Start,
+    Center,
+    End
+}
+
 public class BoxCameraConstraint : CameraConstraint
 {
     public bool HardClampLeft = true;
     public bool HardClampRight = true;
     public bool HardClampTop = true;
     public bool HardClampBottom = true;
+    public LockPosition VerticalLock = LockPosition.None;
+    public LockPosition HorizontalLock = LockPosition.None;
     public float ConstrainObject = 0.0f;
 
     float LERP(float a, float b, float ratio)
@@ -61,6 +71,38 @@ public class BoxCameraConstraint : CameraConstraint
         {
             Rect newClampedRect = new Rect(ClampedRect);
             clampRect(ref newClampedRect, HardClampLeft, HardClampRight, HardClampTop, HardClampBottom);
+            switch(HorizontalLock)
+            {
+                case LockPosition.Start:
+                    newClampedRect.xMax = clampCollider.bounds.min.x + newClampedRect.width;
+                    newClampedRect.xMin = clampCollider.bounds.min.x;
+                    break;
+                case LockPosition.Center:
+                    float rectSize = newClampedRect.width;
+                    newClampedRect.xMin = (clampCollider.bounds.min.x + clampCollider.bounds.max.x - rectSize) / 2;
+                    newClampedRect.xMax = (clampCollider.bounds.min.x + clampCollider.bounds.max.x + rectSize) / 2; ;
+                    break;
+                case LockPosition.End:
+                    newClampedRect.xMin = clampCollider.bounds.max.x - newClampedRect.width;
+                    newClampedRect.xMax = clampCollider.bounds.max.x;
+                    break;
+            }
+            switch (VerticalLock)
+            {
+                case LockPosition.Start:
+                    newClampedRect.yMax = clampCollider.bounds.min.y + newClampedRect.height;
+                    newClampedRect.yMin = clampCollider.bounds.min.y;
+                    break;
+                case LockPosition.Center:
+                    float rectSize = newClampedRect.height;
+                    newClampedRect.yMin = (clampCollider.bounds.min.y + clampCollider.bounds.max.y - rectSize) / 2;
+                    newClampedRect.yMax = (clampCollider.bounds.min.y + clampCollider.bounds.max.y + rectSize) / 2; ;
+                    break;
+                case LockPosition.End:
+                    newClampedRect.yMin = clampCollider.bounds.max.y - newClampedRect.height;
+                    newClampedRect.yMax = clampCollider.bounds.max.y;
+                    break;
+            }
             float ClampRatio = 0;
             if (TimeClamped >= 0)
             {
