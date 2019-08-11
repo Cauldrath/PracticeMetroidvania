@@ -17,11 +17,17 @@ public class Damager : MonoBehaviour
     public bool active = true;
     public Collider2D damageCollider;
     public DamageEvent OnDamage;
+    public bool singleHit = false;
+
+    private List<Damageable> objectsHit = new List<Damageable>();
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        if (damageCollider == null)
+        {
+            damageCollider = GetComponent<Collider2D>();
+        }
     }
 
     void FixedUpdate()
@@ -35,13 +41,25 @@ public class Damager : MonoBehaviour
                 Damageable damageable = results[loop].GetComponent<Damageable>();
                 if (damageable)
                 {
-                    if ((damageable.DamagedByFaction & FactionDamage) != 0)
+                    if (!objectsHit.Contains(damageable))
                     {
-                        damageable.Hit(this);
-                        OnDamage.Invoke(this, damageable);
+                        if ((damageable.DamagedByFaction & FactionDamage) != 0)
+                        {
+                            damageable.Hit(this);
+                            OnDamage.Invoke(this, damageable);
+                        }
+                        if (singleHit)
+                        {
+                            objectsHit.Add(damageable);
+                        }
                     }
                 }
             }
         }
+    }
+
+    public void ResetHit()
+    {
+        objectsHit.Clear();
     }
 }

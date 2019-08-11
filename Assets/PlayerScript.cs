@@ -645,12 +645,14 @@ public class PlayerScript : MonoBehaviour
                         isUppercutting = true;
                         attackDuration = uppercutDuration;
                         currentMelee = uppercut;
+                        currentMelee.ResetHit();
                     }
                     else
                     {
                         // Normal ground slash
                         attackDuration = groundAttackDuration;
                         currentMelee = groundMelee;
+                        currentMelee.ResetHit();
                     }
                 }
                 else
@@ -659,14 +661,16 @@ public class PlayerScript : MonoBehaviour
                     {
                         // Downstab
                         isDownstabbing = true;
-                        currentMelee = downStab;
                         attackDuration = -1;
+                        currentMelee = downStab;
+                        currentMelee.ResetHit();
                     }
                     else
                     {
                         // Normal jump slash
-                        currentMelee = jumpMelee;
                         attackDuration = jumpAttackDuration;
+                        currentMelee = jumpMelee;
+                        currentMelee.ResetHit();
                     }
                     ceilingClinging = false;
                 }

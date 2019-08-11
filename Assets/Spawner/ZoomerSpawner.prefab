@@ -1,25 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &4085277077763423047
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5958791353067948075}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b496ccd0dba01a4aa292691ce84a1c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Target: {fileID: 0}
-  ViewCamera: {fileID: 0}
-  MoveClockwise: 1
-  ClingDistance: 0.3
-  ClingPadding: 0.1
-  ClimbDistance: 0.1
-  MoveSpeed: 5
---- !u!1001 &9074001761502655592
+--- !u!1001 &5333292501547541645
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -29,7 +10,7 @@ PrefabInstance:
     - target: {fileID: 3412802370259303491, guid: 33ae681baa35f484eb5910080bac23e6,
         type: 3}
       propertyPath: m_Name
-      value: CrawlerSpawner
+      value: ZoomerSpawner
       objectReference: {fileID: 0}
     - target: {fileID: 7392182729668650668, guid: 33ae681baa35f484eb5910080bac23e6,
         type: 3}
@@ -55,18 +36,7 @@ PrefabInstance:
         type: 3}
       propertyPath: Spawnable
       value: 
-      objectReference: {fileID: 8612529696780157339, guid: e9085272c213c1c41a951c52fe668256,
+      objectReference: {fileID: 3892955050621708096, guid: 31d5afc2a26153f499356aabac469ceb,
         type: 3}
-    - target: {fileID: 7097211419134844354, guid: 33ae681baa35f484eb5910080bac23e6,
-        type: 3}
-      propertyPath: scriptInit
-      value: 
-      objectReference: {fileID: 4085277077763423047}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 33ae681baa35f484eb5910080bac23e6, type: 3}
---- !u!1 &5958791353067948075 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3412802370259303491, guid: 33ae681baa35f484eb5910080bac23e6,
-    type: 3}
-  m_PrefabInstance: {fileID: 9074001761502655592}
-  m_PrefabAsset: {fileID: 0}

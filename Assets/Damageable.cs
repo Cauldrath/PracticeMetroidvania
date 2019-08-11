@@ -33,12 +33,12 @@ public class Damageable : MonoBehaviour
     // Negative Health means set to max on spawn
     public int Health = -1;
     [EnumFlag]
-    public DamageTypes Vulnerabilities = DamageTypes.Collision | DamageTypes.Fire | DamageTypes.LightMelee | DamageTypes.Melee | DamageTypes.Projectile;
+    public DamageTypes Vulnerabilities = (DamageTypes)~0;
     public float invincibilityTime = 1.0f;
     [EnumFlag]
     public DamageTypes InvincibleVulnerabilities = 0;
     [EnumFlag]
-    public DamageTypes InvincibilityTriggers = DamageTypes.Collision | DamageTypes.Fire | DamageTypes.Melee | DamageTypes.Projectile;
+    public DamageTypes InvincibilityTriggers = (DamageTypes)~0;
     [EnumFlag]
     public Factions DamagedByFaction = Factions.Enemy | Factions.Hazard;
     public Collider2D vulnerableCollider;
@@ -52,6 +52,10 @@ public class Damageable : MonoBehaviour
         if (Health < 1)
         {
             Health = MaxHealth;
+        }
+        if (vulnerableCollider == null)
+        {
+            vulnerableCollider = GetComponent<Collider2D>();
         }
     }
 
