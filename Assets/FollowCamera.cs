@@ -7,13 +7,13 @@ public class FollowCamera : MonoBehaviour
     public GameObject followObject;
     public Vector3 followDirection = new Vector3(0, 0, -10.0f);
     public float XMultiplier = 15.0f;
-    public float YMultiplier = 9.0f;
+    public float YMultiplier = 15.0f;
     public float XRange = 20.0f;
-    public float YRange = 20.0f;
+    public float YRange = 22.5f;
     public float OffsetTime = 2.0f;
     public float CenteringMultiplierX = 2.0f;
     public float CenteringMultiplierY = 2.0f;
-    public float MaxZoom = 6.0f;
+    public float MaxZoom = 8.0f;
     public float MinZoom = 10.0f;
     public float MinZoomRatio = 0.55f;
     public float MinXOffsetRatio = 0.55f;

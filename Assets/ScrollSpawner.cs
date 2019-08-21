@@ -28,6 +28,7 @@ public class ScrollSpawner : MonoBehaviour
                 if (!wasOnScreen)
                 {
                     SpawnedObject = GameObject.Instantiate(Spawnable, transform.position, transform.rotation);
+                    SpawnedObject.transform.localScale = transform.localScale;
                     Scrollable objectScrollable = SpawnedObject.GetComponent<Scrollable>();
                     if (objectScrollable)
                     {

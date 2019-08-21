@@ -110,6 +110,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: Damager+DamageEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
       PublicKeyToken=null
+  singleHit: 0
 --- !u!114 &-3200300682429601318
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212,7 +213,7 @@ MonoBehaviour:
   Target: {fileID: 0}
   ViewCamera: {fileID: 0}
   MoveClockwise: 1
-  ClingDistance: 1
+  ClingDistance: 0.4
   ClingPadding: 0.1
   ClimbDistance: 0.1
   MoveSpeed: 5
