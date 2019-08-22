@@ -20,6 +20,7 @@ public class Damager : MonoBehaviour
     public bool singleHit = false;
 
     private List<Damageable> objectsHit = new List<Damageable>();
+    private ContactFilter2D contactFilter;
 
     // Start is called before the first frame update
     void Start()
@@ -28,6 +29,8 @@ public class Damager : MonoBehaviour
         {
             damageCollider = GetComponent<Collider2D>();
         }
+        contactFilter = new ContactFilter2D();
+        contactFilter.useTriggers = true;
     }
 
     void FixedUpdate()
@@ -35,7 +38,7 @@ public class Damager : MonoBehaviour
         if (active)
         {
             Collider2D[] results = new Collider2D[10];
-            int count = damageCollider.OverlapCollider(new ContactFilter2D(), results);
+            int count = damageCollider.OverlapCollider(contactFilter, results);
             for (int loop = 0; loop < count; ++loop)
             {
                 Damageable damageable = results[loop].GetComponent<Damageable>();
