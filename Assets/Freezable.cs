@@ -13,25 +13,32 @@ public class Freezable : MonoBehaviour
 
     private int initialLayer = 9;
     private float freezeTimer = 0;
-    private SpriteRenderer sprite;
-    private Damager objDamager;
+    private SpriteRenderer[] sprites = new SpriteRenderer[0];
+    private Animator animator;
+    private Damager[] objDamagers = new Damager[0];
     private EnemyScript ai;
-    private Color initialColor;
+    private Color[] initialColors = new Color[0];
+    private Rigidbody2D body;
+    private RigidbodyConstraints2D initialConstraint = RigidbodyConstraints2D.None;
     private float flashTimer;
     private bool flashToggle;
 
     void Start()
     {
         initialLayer = gameObject.layer;
-        sprite = GetComponent<SpriteRenderer>();
-        objDamager = GetComponent<Damager>();
+        sprites = GetComponentsInChildren<SpriteRenderer>();
+        objDamagers = GetComponentsInChildren<Damager>();
         ai = GetComponent<EnemyScript>();
-        if (sprite)
+        initialColors = new Color[sprites.Length];
+        body = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+        if (body)
         {
-            initialColor = sprite.color;
-        } else
+            initialConstraint = body.constraints;
+        }
+        for (int loop = 0; loop < sprites.Length; ++loop)
         {
-            initialColor = Color.white;
+            initialColors[loop] = sprites[loop].color;
         }
     }
 
@@ -44,27 +51,41 @@ public class Freezable : MonoBehaviour
             {
                 freezeTimer = 0;
                 gameObject.layer = initialLayer;
-                if (sprite)
+                for (int loop = 0; loop < sprites.Length; ++loop)
                 {
-                    sprite.color = initialColor;
+                    sprites[loop].color = initialColors[loop];
                 }
-                if (objDamager)
-                {
+                foreach(Damager objDamager in objDamagers) {
                     objDamager.enabled = true;
                 }
                 if (ai) {
                     ai.enabled = true;
+                }
+                if (body)
+                {
+                    body.constraints = initialConstraint;
+                }
+                if (animator)
+                {
+                    animator.speed = 1;
                 }
             }
             else if (freezeTimer < thawAnimation)
             {
                 if (flashToggle)
                 {
-                    sprite.color = initialColor;
+                    for (int loop = 0; loop < sprites.Length; ++loop)
+                    {
+                        sprites[loop].color = initialColors[loop];
+                    }
                 } else {
                     float freezeRatio = freezeTimer / thawAnimation;
-                    sprite.color = new Color(Mathf.Lerp(initialColor.r, freezeColor.r, freezeRatio), Mathf.Lerp(initialColor.g, freezeColor.g, freezeRatio),
-                        Mathf.Lerp(initialColor.b, freezeColor.b, freezeRatio), Mathf.Lerp(initialColor.a, freezeColor.a, freezeRatio));
+                    for (int loop = 0; loop < sprites.Length; ++loop)
+                    {
+                        Color initialColor = initialColors[loop];
+                        sprites[loop].color = new Color(Mathf.Lerp(initialColor.r, freezeColor.r, freezeRatio), Mathf.Lerp(initialColor.g, freezeColor.g, freezeRatio),
+                            Mathf.Lerp(initialColor.b, freezeColor.b, freezeRatio), Mathf.Lerp(initialColor.a, freezeColor.a, freezeRatio));
+                    }
                 }
                 flashTimer += Time.deltaTime;
                 if (flashTimer > flashDuration)
@@ -83,9 +104,9 @@ public class Freezable : MonoBehaviour
             if (freezeTimer > 0)
             {
                 freezeTimer = freezeDuration;
-                if (sprite)
+                for (int loop = 0; loop < sprites.Length; ++loop)
                 {
-                    sprite.color = freezeColor;
+                    sprites[loop].color = freezeColor;
                 }
             }
             else if (damageable.Health <= freezeHealth)
@@ -93,17 +114,25 @@ public class Freezable : MonoBehaviour
                 gameObject.layer = freezeLayer;
                 damageable.Health = freezeHealth;
                 freezeTimer = freezeDuration;
-                if (sprite)
+                for (int loop = 0; loop < sprites.Length; ++loop)
                 {
-                    sprite.color = freezeColor;
+                    sprites[loop].color = freezeColor;
                 }
-                if (objDamager)
+                foreach (Damager objDamager in objDamagers)
                 {
                     objDamager.enabled = false;
                 }
                 if (ai)
                 {
                     ai.enabled = false;
+                }
+                if (body)
+                {
+                    body.constraints = RigidbodyConstraints2D.FreezePosition;
+                }
+                if (animator)
+                {
+                    animator.speed = 0;
                 }
             }
         }

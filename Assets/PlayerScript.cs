@@ -139,6 +139,8 @@ public class PlayerScript : MonoBehaviour
 
     private void FixedUpdate()
     {
+        bool oldTrigger = Physics2D.queriesHitTriggers;
+        Physics2D.queriesHitTriggers = false;
         float horizontalVelocity = body.velocity.x;
         float verticalVelocity = body.velocity.y;
         Vector2 raycastStart = body.position + hitbox.offset;
@@ -161,7 +163,7 @@ public class PlayerScript : MonoBehaviour
                 for (int i = 0; i < m_RaycastPositions.Length; i++)
                 {
                     RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, groundedRaycastDistance, terrainMask);
-                    if (hit.collider != null)
+                    if (hit.collider != null && !hit.collider.isTrigger)
                     {
                         onGround = true;
                     }
@@ -246,7 +248,7 @@ public class PlayerScript : MonoBehaviour
             for (int i = 0; i < m_RaycastPositions.Length; i++)
             {
                 RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, ceilingRaycastDistance, terrainMask);
-                if (hit.collider != null)
+                if (hit.collider != null && !hit.collider.isTrigger)
                 {
                     ceilingClinging = true;
                     if (closestHitDistance == -1 || closestHitDistance > hit.distance)
@@ -320,7 +322,7 @@ public class PlayerScript : MonoBehaviour
                 for (int i = 0; i < m_RaycastPositions.Length; i++)
                 {
                     RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, wallRaycastDistance, terrainMask);
-                    if (hit.collider != null)
+                    if (hit.collider != null && !hit.collider.isTrigger)
                     {
                         onWall = true;
                     }
@@ -345,7 +347,7 @@ public class PlayerScript : MonoBehaviour
                 for (int i = 0; i < m_RaycastPositions.Length; i++)
                 {
                     RaycastHit2D hit = Physics2D.Raycast(m_RaycastPositions[i], raycastDirection, wallRaycastDistance, terrainMask);
-                    if (hit.collider != null)
+                    if (hit.collider != null && !hit.collider.isTrigger)
                     {
                         onWall = true;
                     }
@@ -508,6 +510,8 @@ public class PlayerScript : MonoBehaviour
         {
             terrainMask = LayerMask.GetMask("Default", "Hazards");
         }
+
+        Physics2D.queriesHitTriggers = oldTrigger;
 
         body.velocity = new Vector2(horizontalVelocity, verticalVelocity);
 

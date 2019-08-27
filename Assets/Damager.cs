@@ -42,7 +42,7 @@ public class Damager : MonoBehaviour
             for (int loop = 0; loop < count; ++loop)
             {
                 Damageable damageable = results[loop].GetComponent<Damageable>();
-                if (damageable)
+                if (damageable && damageable.vulnerableCollider == results[loop])
                 {
                     if (!objectsHit.Contains(damageable))
                     {

@@ -20,7 +20,7 @@ public class Giant : EnemyScript
     // Start is called before the first frame update
     void Start()
     {
-        head = GetComponentInChildren<Damageable>();
+        head = GetComponent<Damageable>();
         animator = GetComponent<Animator>();
         body = GetComponent<Rigidbody2D>();
         hitbox = GetComponent<BoxCollider2D>();
@@ -33,10 +33,6 @@ public class Giant : EnemyScript
     // Update is called once per frame
     void Update()
     {
-        if (head.Health == 0)
-        {
-            Destroy(this.gameObject);
-        }
         AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
         if (state.IsName("Giant_Walk"))
         {
