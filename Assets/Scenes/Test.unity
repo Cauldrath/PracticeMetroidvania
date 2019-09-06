@@ -18578,10 +18578,30 @@ MonoBehaviour:
   tilemap: {fileID: 452359820}
   tileChunk: 16
   tileSize: 32
-  groundScaleX: 6.4
-  groundScaleY: 6.4
-  backgroundScaleX: 1.6
-  backgroundScaleY: 1.6
+  groundScaleMinX: 6.2
+  groundScaleMaxX: 6.6
+  groundScaleMinY: 6.2
+  groundScaleMaxY: 6.6
+  groundScalingScaleX: 0.02
+  groundScalingScaleY: 0.02
+  groundBottomScale: 3
+  groundBottomMin: 0.125
+  groundBottomSide: 0.5
+  backgroundScaleMinX: 1.5
+  backgroundScaleMaxX: 1.7
+  backgroundScaleMinY: 1.5
+  backgroundScaleMaxY: 1.7
+  backBrightScaleX: 0.1
+  backBrightScaleY: 0.05
+  backBrightness: 0.6
+  backScalingScaleX: 0.015
+  backScalingScaleY: 0.015
+  crackScaleX: 0.12
+  crackScaleY: 0.12
+  cracksWidth: 0.18
+  crackScatterX: 2.4
+  crackScatterY: 2.4
+  crackScatterWidth: 0.1
   grassRatio: 0.75
   grassScale: 0.064
   grassLength: 0.25

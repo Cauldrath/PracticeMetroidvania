@@ -8,10 +8,30 @@ public class ProceduralTileMapRenderer : MonoBehaviour
     public Tilemap tilemap;
     public int tileChunk = 16;
     public int tileSize = 16;
-    public float groundScaleX = 6.4f;
-    public float groundScaleY = 6.4f;
-    public float backgroundScaleX = 1.6f;
-    public float backgroundScaleY = 1.6f;
+    public float groundScaleMinX = 6.2f;
+    public float groundScaleMaxX = 6.6f;
+    public float groundScaleMinY = 6.2f;
+    public float groundScaleMaxY = 6.6f;
+    public float groundScalingScaleX = 0.02f;
+    public float groundScalingScaleY = 0.02f;
+    public float groundBottomScale = 3.0f;
+    public float groundBottomMin = 0.125f;
+    public float groundBottomSide = 0.5f;
+    public float backgroundScaleMinX = 1.5f;
+    public float backgroundScaleMaxX = 1.7f;
+    public float backgroundScaleMinY = 1.5f;
+    public float backgroundScaleMaxY = 1.7f;
+    public float backBrightScaleX = 0.1f;
+    public float backBrightScaleY = 0.1f;
+    public float backBrightness = 0.6f;
+    public float backScalingScaleX = 0.015f;
+    public float backScalingScaleY = 0.015f;
+    public float crackScaleX = 0.12f;
+    public float crackScaleY = 0.12f;
+    public float cracksWidth = 0.2f;
+    public float crackScatterX = 1.4f;
+    public float crackScatterY = 1.4f;
+    public float crackScatterWidth = 0.1f;
     public float grassRatio = 0.9f;
     public float grassScale = 0.064f;
     public float grassLength = 0.25f;
@@ -74,35 +94,72 @@ public class ProceduralTileMapRenderer : MonoBehaviour
                         pos.x = bounds.xMin + (textureX * tileChunk) + tilePosX;
                         pos.y = bounds.yMin + (textureY * tileChunk) + tilePosY;
                         bool hasTile = tilemap.HasTile(pos);
+                        bool upTile = tilemap.HasTile(pos + Vector3Int.up);
+                        bool downTile = tilemap.HasTile(pos + Vector3Int.down);
+                        bool leftTile = tilemap.HasTile(pos + Vector3Int.left);
+                        bool rightTile = tilemap.HasTile(pos + Vector3Int.right);
+
                         for (int x = 0; x < tileSize; x++)
                         {
                             for (int y = 0; y < tileSize; y++)
                             {
                                 float totalX = (x + (tilePosX * tileSize) + (textureX * TextureSize)) / (float)tileSize;
                                 float totalY = (y + (tilePosY * tileSize) + (textureY * TextureSize)) / (float)tileSize;
+
                                 float bloodDist = ((new Vector2(totalX, totalY)) - bloodPosition).magnitude;
                                 float bloodRatio = Mathf.Lerp(maxBloodRatio, minBloodRatio, Mathf.Clamp(bloodDist / minBloodDistance, 0, 1));
                                 int pixelNumber = (x + (tilePosX * tileSize)) + ((y + (tilePosY * tileSize)) * TextureSize);
                                 float bloodSample = (Mathf.PerlinNoise(bloodScaleX * totalX, bloodScaleY * totalY) - (1.0f - bloodRatio)) / bloodRatio;
                                 float bloodSplatterSample = Mathf.PerlinNoise(bloodSplatterScale * totalX, bloodSplatterScale * totalY);
+                                bool showingForeground = false;
                                 if (hasTile)
                                 {
+                                    float groundScale = Mathf.PerlinNoise(groundScalingScaleX * totalX, groundScalingScaleY * totalY);
+                                    float groundScaleX = Mathf.Lerp(groundScaleMinX, groundScaleMaxX, groundScale);
+                                    float groundScaleY = Mathf.Lerp(groundScaleMinY, groundScaleMaxY, groundScale);
                                     float sample = Mathf.PerlinNoise(groundScaleX * totalX, groundScaleY * totalY);
-                                    Vector3Int adjacentPos = new Vector3Int(0, 1, 0) + pos;
-                                    bool adjacentTile = tilemap.HasTile(adjacentPos);
-
-                                    if (!adjacentTile)
+                                    float bottomSample = Mathf.PerlinNoise(groundBottomScale * totalX, tilePosY);
+                                    float minY = groundBottomMin;
+                                    if (x < tileSize / 2)
                                     {
-                                        if (bloodSample > (tileSize - y) / (float)tileSize || bloodSplatterSample * bloodSplatterRatio < bloodSample)
+                                        if (!leftTile)
                                         {
-                                            pix[pixelNumber] = new Color(0.3f + sample * 0.1f, 0f, 0f);
+                                            minY = Mathf.Lerp(groundBottomSide, groundBottomMin - (groundBottomSide - groundBottomMin), x / (float)tileSize);
+                                        }
+                                    } else
+                                    {
+                                        if (!rightTile)
+                                        {
+                                            minY = Mathf.Lerp(groundBottomMin - (groundBottomSide - groundBottomMin), groundBottomSide, x / (float)tileSize);
+                                        }
+                                    }
+                                    if (downTile || y / (float)tileSize > bottomSample * minY)
+                                    {
+                                        showingForeground = true;
+                                        if (!upTile)
+                                        {
+                                            if (bloodSample > (tileSize - y) / (float)tileSize || bloodSplatterSample * bloodSplatterRatio < bloodSample)
+                                            {
+                                                pix[pixelNumber] = new Color(0.3f + sample * 0.1f, 0f, 0f);
+                                            }
+                                            else
+                                            {
+                                                float grassSample = (Mathf.PerlinNoise(grassScale * totalX, grassScale * totalY) - (1.0f - grassRatio)) / grassRatio;
+                                                if (grassSample > (tileSize - y) / (float)tileSize)
+                                                {
+                                                    pix[pixelNumber] = new Color(0f, 0.25f + sample * 0.25f, 0f);
+                                                }
+                                                else
+                                                {
+                                                    pix[pixelNumber] = new Color(0.4f + sample * 0.2f, 0.2f + sample * 0.25f, 0.1f + sample * 0.25f);
+                                                }
+                                            }
                                         }
                                         else
                                         {
-                                            float grassSample = (Mathf.PerlinNoise(grassScale * totalX, grassScale * totalY) - (1.0f - grassRatio)) / grassRatio;
-                                            if (grassSample > (tileSize - y) / (float)tileSize)
+                                            if (bloodSplatterSample * bloodSplatterRatio < bloodSample)
                                             {
-                                                pix[pixelNumber] = new Color(0f, 0.25f + sample * 0.25f, 0f);
+                                                pix[pixelNumber] = new Color(0.3f + sample * 0.1f, 0f, 0f);
                                             }
                                             else
                                             {
@@ -110,23 +167,12 @@ public class ProceduralTileMapRenderer : MonoBehaviour
                                             }
                                         }
                                     }
-                                    else
-                                    {
-                                        if (bloodSplatterSample * bloodSplatterRatio < bloodSample)
-                                        {
-                                            pix[pixelNumber] = new Color(0.3f + sample * 0.1f, 0f, 0f);
-                                        }
-                                        else
-                                        {
-                                            pix[pixelNumber] = new Color(0.4f + sample * 0.2f, 0.2f + sample * 0.25f, 0.1f + sample * 0.25f);
-                                        }
-                                    }
-                                } else
+                                }
+
+                                if (!showingForeground)
                                 {
-                                    Vector3Int adjacentPos = new Vector3Int(0, -1, 0) + pos;
-                                    bool adjacentTile = tilemap.HasTile(adjacentPos);
                                     bool showingGrass = false;
-                                    if (adjacentTile)
+                                    if (downTile)
                                     {
                                         float grassSample = (Mathf.PerlinNoise(grassScale * totalX, grassScale * totalY) - (1.0f - grassRatio)) / grassRatio;
                                         if (grassSample > 0)
@@ -169,16 +215,38 @@ public class ProceduralTileMapRenderer : MonoBehaviour
 
                                         if (!showingVines)
                                         {
+                                            float backgroundScale = Mathf.PerlinNoise(backScalingScaleX * totalX, backScalingScaleY * totalY);
+                                            float backgroundScaleX = Mathf.Lerp(backgroundScaleMinX, backgroundScaleMaxX, backgroundScale);
+                                            float backgroundScaleY = Mathf.Lerp(backgroundScaleMinY, backgroundScaleMaxY, backgroundScale);
                                             float sample = Mathf.PerlinNoise(backgroundScaleX * totalX, backgroundScaleY * totalY);
-                                            if (bloodSplatterSample * bloodSplatterRatio < bloodSample)
+
+                                            float crackSample = Mathf.PerlinNoise(crackScaleX * totalX, crackScaleY * totalY);
+                                            float crackScatter = Mathf.PerlinNoise(crackScatterX * totalX, crackScatterY * totalY);
+                                            if (crackSample > 0.5f - cracksWidth * 0.5f && crackSample < 0.5f + cracksWidth * 0.5f && crackScatter > crackSample - crackScatterWidth * 0.5f && crackScatter < crackSample + crackScatterWidth * 0.5f)
                                             {
-                                                pix[pixelNumber] = new Color(0.2f + sample * 0.1f, 0f, 0f);
+                                                if (bloodSplatterSample * bloodSplatterRatio < bloodSample)
+                                                {
+                                                    pix[pixelNumber] = new Color(0.2f, 0f, 0f);
+                                                }
+                                                else
+                                                {
+                                                    pix[pixelNumber] = new Color(0f, 0f, 0f);
+                                                }
                                             }
                                             else
                                             {
-                                                pix[pixelNumber] = new Color(0.3f + 0.2f * sample * sample, 0.2f + 0.3f * sample * sample, 0.2f);
+                                                if (bloodSplatterSample * bloodSplatterRatio < bloodSample)
+                                                {
+                                                    pix[pixelNumber] = new Color(0.2f + sample * 0.1f, 0f, 0f);
+                                                }
+                                                else
+                                                {
+                                                    pix[pixelNumber] = new Color(0.3f + 0.2f * sample, 0.2f + 0.3f * sample, 0.2f);
+                                                }
                                             }
                                         }
+
+                                        pix[pixelNumber] *= Mathf.PerlinNoise(backBrightScaleX * totalX, backBrightScaleX * totalY) + backBrightness - 1.0f;
                                     }
                                 }
                             }
@@ -188,7 +256,7 @@ public class ProceduralTileMapRenderer : MonoBehaviour
 
                 // Copy the pixel data to the texture and load it into the GPU.
                 noiseTex.SetPixels(pix);
-                noiseTex.Apply();
+                noiseTex.Apply(true, true);
                 Renderer rend = targets[textureX, textureY].GetComponent<Renderer>();
                 rend.material = new Material(rend.material);
                 rend.material.mainTexture = noiseTex;
