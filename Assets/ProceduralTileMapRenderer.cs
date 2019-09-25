@@ -58,6 +58,11 @@ public class ProceduralTileMapRenderer : MonoBehaviour
         {
             tilemap = GetComponent<Tilemap>();
         }
+        TilemapRenderer tileRender = GetComponentInChildren<TilemapRenderer>();
+        if (tileRender != null)
+        {
+            tileRender.enabled = false;
+        }
         BoundsInt bounds = tilemap.cellBounds;
         int TextureSize = tileChunk * tileSize;
         int width = bounds.xMax - bounds.xMin;

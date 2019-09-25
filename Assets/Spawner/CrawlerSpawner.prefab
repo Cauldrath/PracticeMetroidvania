@@ -15,8 +15,7 @@ MonoBehaviour:
   Target: {fileID: 0}
   ViewCamera: {fileID: 0}
   MoveClockwise: 1
-  ClingDistance: 0.4
-  ClingPadding: 0.1
+  ClingDistance: 0.9
   ClimbDistance: 0.1
   MoveSpeed: 5
 --- !u!1001 &9074001761502655592

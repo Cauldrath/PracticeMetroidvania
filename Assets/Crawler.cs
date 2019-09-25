@@ -5,12 +5,14 @@ using UnityEngine;
 public class Crawler : EnemyScript
 {
     public bool MoveClockwise = true;
-    public float ClingDistance = 1.0f;
-    public float ClingPadding = 0.04f;
+    public float ClingDistance = 0.9f;
     public float ClimbDistance = 0.04f;
     public float MoveSpeed = 5.0f;
+    public float spinSpeed = 0.0f;
 
     private BoxCollider2D hitbox;
+    private float clingAngle = 0;
+    private float spin = 0.0f;
 
     // Start is called before the first frame update
     void Start()
@@ -21,14 +23,14 @@ public class Crawler : EnemyScript
     // Update is called once per frame
     void FixedUpdate()
     {
-        float downAngle = transform.rotation.eulerAngles.z * Mathf.Deg2Rad;
+        float downAngle = clingAngle * Mathf.Deg2Rad;
         Vector2 downVector = new Vector2(Mathf.Sin(downAngle), -Mathf.Cos(downAngle));
-        float walkAngle = (transform.rotation.eulerAngles.z + (MoveClockwise ? 90 : -90)) * Mathf.Deg2Rad;
+        float walkAngle = (clingAngle + (MoveClockwise ? 90 : -90)) * Mathf.Deg2Rad;
         Vector2 walkVector = new Vector2(Mathf.Sin(walkAngle), -Mathf.Cos(walkAngle));
 
         Vector2[] m_RaycastPositions = new Vector2[2];
         Vector2 raycastStart = new Vector2(transform.position.x + hitbox.offset.x, transform.position.y + hitbox.offset.y);
-        Vector2 raycastStartBottomCenter = raycastStart + downVector * hitbox.size.y * 0.5f;
+        Vector2 raycastStartBottomCenter = raycastStart + downVector * (hitbox.size.y * 0.5f - (ClingDistance / 2));
 
         //Bottom right (assuming clockwise)
         m_RaycastPositions[0] = raycastStartBottomCenter + walkVector * hitbox.size.x * 0.5f;
@@ -43,42 +45,50 @@ public class Crawler : EnemyScript
             // Hit a wall, so climb it
             Vector2 ClingVector = hit.distance * walkVector;
             transform.position = new Vector3(transform.position.x + ClingVector.x, transform.position.y + ClingVector.y, transform.position.z);
-
-            walkVector = downVector * -1;
-            transform.rotation = Quaternion.AngleAxis(transform.rotation.eulerAngles.z + (MoveClockwise ? 90 : -90), new Vector3(0, 0, 1));
+            clingAngle += MoveClockwise ? 90 : -90;
+            transform.rotation = Quaternion.AngleAxis(clingAngle + spin, new Vector3(0, 0, 1));
         }
         else
         {
-            hit = Physics2D.Raycast(m_RaycastPositions[1], downVector, ClingDistance, terrainMask);
+            hit = Physics2D.Raycast(m_RaycastPositions[1], downVector, ClingDistance * 1.5f, terrainMask);
             if (hit.collider == null)
             {
                 // Nothing below you to the left
-                hit = Physics2D.Raycast(m_RaycastPositions[0], downVector, ClingDistance, terrainMask);
+                hit = Physics2D.Raycast(m_RaycastPositions[0], downVector, ClingDistance * 1.5f, terrainMask);
                 if (hit.collider == null)
                 {
                     // Nothing below you to the right, so rotate
                     walkVector = downVector;
-                    transform.rotation = Quaternion.AngleAxis(transform.rotation.eulerAngles.z + (MoveClockwise ? -90 : 90), new Vector3(0, 0, 1));
-                    // Move it the distance of the cling padding so it winds up on the new surface
-                    Vector2 ClingVector = ClingPadding * walkVector;
-                    transform.position = new Vector3(transform.position.x + ClingVector.x, transform.position.y + ClingVector.y, transform.position.z);
+                    clingAngle += MoveClockwise ? -90 : 90;
+                    transform.rotation = Quaternion.AngleAxis(clingAngle + spin, new Vector3(0, 0, 1));
                 }
                 else
                 {
-                    // Pull the object to the surface hit
-                    Vector2 ClingVector = (hit.distance - ClingPadding) * downVector;
-                    transform.position = new Vector3(transform.position.x + ClingVector.x, transform.position.y + ClingVector.y, transform.position.z);
+                    if (hit.distance + 1.0f > ClingDistance / 2)
+                    {
+                        // Pull the object to the surface hit
+                        Vector2 ClingVector = (hit.distance - ClingDistance / 2) * downVector;
+                        transform.position = new Vector3(transform.position.x + ClingVector.x, transform.position.y + ClingVector.y, transform.position.z);
+                    }
                 }
             }
             else
             {
-                // Pull the object to the surface hit
-                Vector2 ClingVector = (hit.distance - ClingPadding) * downVector;
-                transform.position = new Vector3(transform.position.x + ClingVector.x, transform.position.y + ClingVector.y, transform.position.z);
+                if (hit.distance > ClingDistance / 2)
+                {
+                    // Pull the object to the surface hit
+                    Vector2 ClingVector = (hit.distance - ClingDistance / 2) * downVector;
+                    transform.position = new Vector3(transform.position.x + ClingVector.x, transform.position.y + ClingVector.y, transform.position.z);
+                }
             }
         }
 
         Vector2 velocityVector = walkVector * Time.deltaTime * MoveSpeed;
         transform.position = new Vector3(transform.position.x + velocityVector.x, transform.position.y + velocityVector.y, transform.position.z);
+        if (spinSpeed != 0.0f)
+        {
+            spin += spinSpeed * Time.deltaTime;
+            transform.rotation = Quaternion.AngleAxis(clingAngle + spin, new Vector3(0, 0, 1));
+        }
     }
 }

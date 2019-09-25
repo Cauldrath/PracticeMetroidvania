@@ -50,10 +50,10 @@ public class Damager : MonoBehaviour
                         {
                             damageable.Hit(this);
                             OnDamage.Invoke(this, damageable);
-                        }
-                        if (singleHit)
-                        {
-                            objectsHit.Add(damageable);
+                            if (singleHit)
+                            {
+                                objectsHit.Add(damageable);
+                            }
                         }
                     }
                 }

@@ -728,8 +728,11 @@ public class PlayerScript : MonoBehaviour
         if ((damageable.Vulnerabilities & DamageTypes.ProjectileDestroyer) != 0)
         {
             Damager shotDamage = damageable.GetComponent<Damager>();
-            energyAbsorbed = absorbableTypes & shotDamage.DamageType;
-            energyAbsorbLeft = energyAbsorbDuration;
+            if (shotDamage != null)
+            {
+                energyAbsorbed = absorbableTypes & shotDamage.DamageType;
+                energyAbsorbLeft = energyAbsorbDuration;
+            }
         }
     }
 
