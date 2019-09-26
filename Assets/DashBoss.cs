@@ -96,20 +96,20 @@ public class DashBoss : EnemyScript
         } else if (body.velocity == Vector2.zero && (Target.transform.position - transform.position).magnitude < dashAwayRange)
         {
             float xVel;
-            float yVel = Random.Range(0.1f, 1.0f);
-            if (transform.localPosition.x > 2)
+            float yVel;
+            if (transform.localPosition.x > 0)
             {
-                xVel = Random.Range(-1.0f, 0.5f);
-            } else if (transform.localPosition.x < -2)
-            {
-                xVel = Random.Range(0.5f, 1.0f);
+                xVel = Random.Range(-1.0f, -0.5f);
             } else
             {
-                xVel = Random.Range(-1.0f, 1.0f);
+                xVel = Random.Range(0.5f, 1.0f);
             }
             if (transform.localPosition.y > 0)
             {
-                yVel *= -1;
+                yVel = Random.Range(-0.25f, 0.1f);
+            } else
+            {
+                yVel = Random.Range(0.25f, 0.5f);
             }
             body.velocity = (new Vector2(xVel, yVel)).normalized * dashSpeed;
         }

@@ -9,6 +9,7 @@ public class DashBossContainer : MonoBehaviour
     public GameObject[] switches;
     public GameObject[] blades;
     public float switchDelay = 5.0f;
+    public OffScreenIndicator offScreenIndicator;
 
     private CameraConstraint constraint;
     private BoxCollider2D constraintCollider;
@@ -21,25 +22,28 @@ public class DashBossContainer : MonoBehaviour
         constraint = GetComponentInChildren<CameraConstraint>();
         constraintCollider = constraint.GetComponent<BoxCollider2D>();
         initialColliderSize = new Vector2(constraintCollider.size.x, constraintCollider.size.y);
-        int switchIndex = Random.Range(0, switches.Length - 1);
-        switches[switchIndex].SetActive(true);
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (walls != null && constraint != null && constraint.isClamped())
+        if (walls != null && constraint != null && constraint.isClamped() && !boss.activeSelf)
         {
             constraintCollider.size = initialColliderSize + (new Vector2(2, 2));
             walls.SetActive(true);
             boss.SetActive(true);
+            int switchIndex = Random.Range(0, switches.Length - 1);
+            switches[switchIndex].SetActive(true);
+            offScreenIndicator.Add(switches[switchIndex]);
         }
         if (switchTime > 0)
         {
             switchTime -= Time.deltaTime;
             if (switchTime <= 0)
             {
-                switches[Random.Range(0, switches.Length - 1)].SetActive(true);
+                GameObject activeSwitch = switches[Random.Range(0, switches.Length - 1)];
+                activeSwitch.SetActive(true);
+                offScreenIndicator.Add(activeSwitch);
             }
         }
         for (int bladeLoop = 0; bladeLoop < blades.Length; ++bladeLoop)
@@ -54,19 +58,21 @@ public class DashBossContainer : MonoBehaviour
 
     public void onHitSwitch(Damager damager, Damageable damageable)
     {
-        constraint.transform.localScale *= 0.9f;
+        constraint.transform.localScale = new Vector3(constraint.transform.localScale.x * 0.9f, constraint.transform.localScale.y, constraint.transform.localScale.z);
         switchTime = switchDelay;
         for (int loop = 0; loop < switches.Length; ++loop)
         {
             if (switches[loop].activeSelf)
             {
+                offScreenIndicator.Remove(switches[loop]);
                 switches[loop].SetActive(false);
             }
         }
         for (int bladeLoop = 0; bladeLoop < blades.Length; ++bladeLoop)
         {
-            blades[bladeLoop].transform.localPosition *= 0.8f;
+            blades[bladeLoop].transform.localPosition = new Vector3(blades[bladeLoop].transform.localPosition.x * 0.8f, blades[bladeLoop].transform.localPosition.y, blades[bladeLoop].transform.localPosition.z);
         }
+        boss.transform.localPosition = new Vector3(boss.transform.localPosition.x * 0.8f, boss.transform.localPosition.y, boss.transform.localPosition.z);
     }
 
     public void onHitBoss(Damager damager, Damageable damageable)
