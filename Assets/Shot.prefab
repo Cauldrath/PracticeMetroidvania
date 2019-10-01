@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: -6511486363935063257}
   - component: {fileID: -4927656123622842302}
   - component: {fileID: -7658137777463004735}
+  - component: {fileID: 6323469067967618782}
   m_Layer: 10
   m_Name: Shot
   m_TagString: Enemy
@@ -62,6 +63,7 @@ SpriteRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -119,8 +121,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-    m_TypeName: Damageable+DamageEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-      PublicKeyToken=null
 --- !u!61 &5970084095331460246
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -167,8 +167,7 @@ MonoBehaviour:
   OnDamage:
     m_PersistentCalls:
       m_Calls: []
-    m_TypeName: Damager+DamageEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-      PublicKeyToken=null
+  singleHit: 0
 --- !u!50 &-6511486363935063257
 Rigidbody2D:
   serializedVersion: 4
@@ -217,3 +216,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DestroyOnDeath: 1
+--- !u!114 &6323469067967618782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1205229217549966855}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 127314694b560a14b9a4b56c92ab8398, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Lifetime: -1

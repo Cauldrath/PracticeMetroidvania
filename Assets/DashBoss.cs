@@ -11,7 +11,14 @@ public class DashBoss : EnemyScript
     public float aimIndicator = 1.0f;
     public float dashSpeed = 40.0f;
     public float shotSpeed = 40.0f;
+    public float aimLength = 40.0f;
+    public float maxAimWidth = 0.1f;
+    public float minAimWidth = 1.0f;
+    public Color maxAimColor = Color.red;
+    public Color minAimColor = Color.cyan;
     public GameObject Shot;
+    public GameObject AimLine;
+    public BoxCollider2D constraint;
 
     private Damageable damageable;
     private Rigidbody2D body;
@@ -20,6 +27,7 @@ public class DashBoss : EnemyScript
     private float recovery = 0.0f;
     private float aimTime = 0.0f;
     private Vector3 lockVector = Vector3.zero;
+    private LineRenderer aimRenderer;
 
     // Start is called before the first frame update
     void Start()
@@ -33,6 +41,11 @@ public class DashBoss : EnemyScript
         }
         damageable.DamagedByFaction = 0;
         aimTime = aimDelay;
+        if (AimLine)
+        {
+            AimLine = Instantiate(AimLine, transform);
+            aimRenderer = AimLine.GetComponent<LineRenderer>();
+        }
     }
 
     // Update is called once per frame
@@ -56,13 +69,25 @@ public class DashBoss : EnemyScript
         }
 
         aimTime -= Time.deltaTime;
-        if (aimTime <= lockTime && lockVector == Vector3.zero)
+        Vector3 aimVector;
+        if (lockVector != Vector3.zero)
         {
-            lockVector = Target.transform.position;
+            aimVector = lockVector;
+        }
+        else
+        {
+            aimVector = Target.transform.position;
             if (targetBody)
             {
-                lockVector += (new Vector3(targetBody.velocity.x, targetBody.velocity.y, 0)) * aimTime;
+                aimVector += (new Vector3(targetBody.velocity.x, targetBody.velocity.y, 0)) * Mathf.Min(lockTime, aimTime);
             }
+            // Prevent aim from leaving the room
+            aimVector.x = Mathf.Min(Mathf.Max(aimVector.x, constraint.bounds.min.x), constraint.bounds.max.x);
+            aimVector.y = Mathf.Min(Mathf.Max(aimVector.y, constraint.bounds.min.y), constraint.bounds.max.y);
+        }
+        if (aimTime <= lockTime && lockVector == Vector3.zero)
+        {
+            lockVector = aimVector;
         }
         if (aimTime <= 0)
         {
@@ -77,14 +102,32 @@ public class DashBoss : EnemyScript
                     targetDirection.Normalize();
                     shotBody.velocity = targetDirection * shotSpeed;
                 }
+                TimeLimited timeLimited = newShot.GetComponent<TimeLimited>();
                 Scrollable scrollable = newShot.GetComponent<Scrollable>();
-                if (scrollable)
+                if (timeLimited)
                 {
-                    scrollable.viewCamera = ViewCamera;
+                    timeLimited.Lifetime = 5.0f;
+                    if (scrollable)
+                    {
+                        scrollable.enabled = false;
+                    }
+                }
+                else
+                {
+                    if (scrollable)
+                    {
+                        scrollable.viewCamera = ViewCamera;
+                    }
                 }
             }
             lockVector = Vector3.zero;
         }
+        aimRenderer.SetPosition(1, (aimVector - transform.position).normalized * aimLength);
+        float aimRatio = aimTime / aimDelay;
+        float lineWidth = Mathf.Lerp(maxAimWidth, minAimWidth, aimRatio);
+        Color lineColor = Color.Lerp(maxAimColor, minAimColor, aimRatio);
+        aimRenderer.startWidth = aimRenderer.endWidth = lineWidth;
+        aimRenderer.startColor = aimRenderer.endColor = lineColor;
         if (recovery > 0)
         {
             recovery -= Time.deltaTime;

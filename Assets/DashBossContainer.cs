@@ -50,8 +50,8 @@ public class DashBossContainer : MonoBehaviour
         {
             if (!constraintCollider.OverlapPoint(blades[bladeLoop].transform.position))
             {
-                // If one of the blades escaped the room, put it back in the middle
-                blades[bladeLoop].transform.localPosition = Vector3.zero;
+                // If one of the blades escaped the room, put it back in the starting position
+                blades[bladeLoop].transform.localPosition = new Vector3(0, 4.5f, 0);
             }
         }
     }
