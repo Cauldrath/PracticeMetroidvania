@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerScript : MonoBehaviour
 {
@@ -526,6 +527,16 @@ public class PlayerScript : MonoBehaviour
         animator.SetBool("Uppercut", isUppercutting);
     }
 
+    bool dashPressed(Gamepad gamepad)
+    {
+        return gamepad.leftShoulder.wasPressedThisFrame || gamepad.buttonEast.wasPressedThisFrame;
+    }
+
+    bool dashReleased(Gamepad gamepad)
+    {
+        return gamepad.leftShoulder.wasReleasedThisFrame || gamepad.buttonEast.wasReleasedThisFrame;
+    }
+
     void Update()
     {
         // Do this every update just so it works with the editor
@@ -562,26 +573,27 @@ public class PlayerScript : MonoBehaviour
             healthImage.fillAmount = (float)damageable.Health / maxHealthBarSize;
         }
 
-        if (knockbackLeft == 0)
+        Gamepad gamepad = Gamepad.current;
+        if (knockbackLeft == 0 && gamepad != null)
         {
-            if (Input.GetButtonUp("Jump"))
+            if (gamepad.buttonSouth.wasReleasedThisFrame)
             {
                 jumpLeft = 0;
             }
 
-            if (Input.GetButtonUp("Dash"))
+            if (dashReleased(gamepad))
             {
                 EndDash();
             }
 
-            if (jumpLeft <= 0 && !isAirDashing && !ceilingClinging && jumpsLeft > 0 && Input.GetButtonDown("Jump"))
+            if (jumpLeft <= 0 && !isAirDashing && !ceilingClinging && jumpsLeft > 0 && gamepad.buttonSouth.wasPressedThisFrame)
             {
                 jumpLeft = jumpTime;
                 jumpsLeft--;
                 // If this is your first jump off the ground
                 if (jumpsLeft == maxJumps - 1)
                 {
-                    if (saveData.hasHighJump && !wallClimbing && ((Input.GetAxis("Vertical") > 0 && dashLeft > 0) || Input.GetAxis("Vertical") > 0.5))
+                    if (saveData.hasHighJump && !wallClimbing && ((gamepad.leftStick.ReadValue().y > 0 && dashLeft > 0) || gamepad.leftStick.ReadValue().y > 0.5))
                     {
                         jumpLeft = highJumpTime;
                         highJumping = true;
@@ -600,8 +612,8 @@ public class PlayerScript : MonoBehaviour
                 EndAttack();
             }
 
-            walkVelocity = Input.GetAxis("Horizontal") * moveSpeed;
-            if (Input.GetButtonDown("Dash"))
+            walkVelocity = gamepad.leftStick.ReadValue().x * moveSpeed;
+            if (dashPressed(gamepad))
             {
                 if (onGround)
                 {
@@ -625,7 +637,7 @@ public class PlayerScript : MonoBehaviour
             }
 
             // If you release up, stop high jumping and ceiling clinging
-            if (Input.GetAxis("Vertical") <= 0)
+            if (gamepad.leftStick.ReadValue().y <= 0)
             {
                 if (highJumping)
                 {
@@ -637,13 +649,13 @@ public class PlayerScript : MonoBehaviour
                 }
             }
 
-            if (Input.GetButtonDown("Attack") && attackDuration == 0)
+            if (gamepad.buttonWest.wasPressedThisFrame && attackDuration == 0)
             {
                 EndDash();
                 currentMelee.active = false;
                 if (onGround)
                 {
-                    if (saveData.hasUppercut && Input.GetAxis("Vertical") > 0.5f)
+                    if (saveData.hasUppercut && gamepad.leftStick.ReadValue().y > 0.5f)
                     {
                         // Uppercut
                         isUppercutting = true;
@@ -661,7 +673,7 @@ public class PlayerScript : MonoBehaviour
                 }
                 else
                 {
-                    if (saveData.hasDownStab && Input.GetAxis("Vertical") < -0.5f)
+                    if (saveData.hasDownStab && gamepad.leftStick.ReadValue().y < -0.5f)
                     {
                         // Downstab
                         isDownstabbing = true;
@@ -682,7 +694,7 @@ public class PlayerScript : MonoBehaviour
             }
             if (wallClimbing)
             {
-                fastFalling = Input.GetAxis("Vertical") < 0;
+                fastFalling = gamepad.leftStick.ReadValue().y < 0;
             }
         }
     }
