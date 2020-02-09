@@ -80,6 +80,15 @@ public class DashBossContainer : MonoBehaviour
         constraint.transform.localScale = Vector3.one;
         if (damageable.Health <= 0)
         {
+            EnemyScript bossScript = boss.GetComponent<EnemyScript>();
+            if (bossScript != null)
+            {
+                PlayerScript player = bossScript.Target.GetComponent<PlayerScript>();
+                if (player != null)
+                {
+                    player.SetBossDeath(1);
+                }
+            }
             GameObject.Destroy(this.gameObject);
         }
         else

@@ -52,6 +52,7 @@ SpriteRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -108,8 +109,6 @@ MonoBehaviour:
   OnDamage:
     m_PersistentCalls:
       m_Calls: []
-    m_TypeName: Damager+DamageEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-      PublicKeyToken=null
   singleHit: 0
 --- !u!114 &-3200300682429601318
 MonoBehaviour:
@@ -156,8 +155,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-    m_TypeName: Damageable+DamageEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-      PublicKeyToken=null
 --- !u!61 &-8695280891447684016
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -213,10 +210,11 @@ MonoBehaviour:
   Target: {fileID: 0}
   ViewCamera: {fileID: 0}
   MoveClockwise: 1
-  ClingDistance: 0.4
-  ClingPadding: 0.1
+  ClingDistance: 0.25
+  FarClingDistance: 0.9
   ClimbDistance: 0.1
   MoveSpeed: 5
+  spinSpeed: 0
 --- !u!114 &-4080373138680325103
 MonoBehaviour:
   m_ObjectHideFlags: 0

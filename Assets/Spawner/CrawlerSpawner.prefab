@@ -15,9 +15,11 @@ MonoBehaviour:
   Target: {fileID: 0}
   ViewCamera: {fileID: 0}
   MoveClockwise: 1
-  ClingDistance: 0.9
-  ClimbDistance: 0.1
+  ClingDistance: 0.25
+  FarClingDistance: 0.9
+  ClimbDistance: 0.2
   MoveSpeed: 5
+  spinSpeed: 0
 --- !u!1001 &9074001761502655592
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30,6 +32,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: CrawlerSpawner
       objectReference: {fileID: 0}
+    - target: {fileID: 7097211419134844354, guid: 33ae681baa35f484eb5910080bac23e6,
+        type: 3}
+      propertyPath: Spawnable
+      value: 
+      objectReference: {fileID: 8612529696780157339, guid: e9085272c213c1c41a951c52fe668256,
+        type: 3}
+    - target: {fileID: 7097211419134844354, guid: 33ae681baa35f484eb5910080bac23e6,
+        type: 3}
+      propertyPath: scriptInit
+      value: 
+      objectReference: {fileID: 4085277077763423047}
     - target: {fileID: 7392182729668650668, guid: 33ae681baa35f484eb5910080bac23e6,
         type: 3}
       propertyPath: m_RootOrder
@@ -50,17 +63,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7097211419134844354, guid: 33ae681baa35f484eb5910080bac23e6,
-        type: 3}
-      propertyPath: Spawnable
-      value: 
-      objectReference: {fileID: 8612529696780157339, guid: e9085272c213c1c41a951c52fe668256,
-        type: 3}
-    - target: {fileID: 7097211419134844354, guid: 33ae681baa35f484eb5910080bac23e6,
-        type: 3}
-      propertyPath: scriptInit
-      value: 
-      objectReference: {fileID: 4085277077763423047}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 33ae681baa35f484eb5910080bac23e6, type: 3}
 --- !u!1 &5958791353067948075 stripped

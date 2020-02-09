@@ -49,7 +49,7 @@ public class DashBoss : EnemyScript
     }
 
     // Update is called once per frame
-    void Update()
+    new void Update()
     {
         if (aimTime > 0 && aimTime <= aimIndicator)
         {
