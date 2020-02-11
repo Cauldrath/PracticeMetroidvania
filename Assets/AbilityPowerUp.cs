@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class AbilityPowerUp : MonoBehaviour
 {
@@ -13,10 +14,12 @@ public class AbilityPowerUp : MonoBehaviour
     private System.Reflection.FieldInfo abilityField;
     private bool showTip = false;
     private float tipStart = 0;
+    private PlayerInput playerInput;
 
     // Start is called before the first frame update
     void Start()
     {
+        playerInput = player.GetComponent<PlayerInput>();
         if (abilityFieldName != null && player != null && player.saveData != null)
         {
 
@@ -51,7 +54,7 @@ public class AbilityPowerUp : MonoBehaviour
     {
         if (showTip)
         {
-            if (Input.GetButtonDown("Submit") && Time.unscaledTime >= tipStart + tipDelay)
+            if (playerInput != null && playerInput.actions["Submit"].triggered && Time.unscaledTime >= tipStart + tipDelay)
             {
                 showTip = false;
                 Time.timeScale = 1;

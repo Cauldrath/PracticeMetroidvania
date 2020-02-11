@@ -47,6 +47,7 @@ SpriteRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -121,6 +122,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9c0a8316fb469e4d9de1c5687870694, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  description: 
-  abilityFieldName: 
+  title: Double Jump
+  description: You can now jump once while in midair.
+  abilityFieldName: hasDoubleJump
+  tipDelay: 1
   player: {fileID: 0}

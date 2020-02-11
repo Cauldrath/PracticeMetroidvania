@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class MainMenu : MonoBehaviour
 {
@@ -11,10 +12,12 @@ public class MainMenu : MonoBehaviour
     private List<UnityEngine.UI.Image> savePanels = new List<UnityEngine.UI.Image>();
     private bool deleting = false;
     private float lastAxis = 0;
+    private PlayerInput playerInput;
 
     // Start is called before the first frame update
     void Start()
     {
+        playerInput = GetComponent<PlayerInput>();
         if (savePanel)
         {
             for (int saveLoop = 0; saveLoop < savesToShow; saveLoop++)
@@ -69,40 +72,44 @@ public class MainMenu : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetButtonDown("Submit"))
+        if (playerInput != null)
         {
-            if (deleting)
+            if (playerInput.actions["Submit"].triggered)
             {
-                SavedGame.DeleteSave(SavedGame.saveSlot);
-                savedGames[SavedGame.saveSlot] = new SavedGame();
-                setUpPanel(savedGames[SavedGame.saveSlot], savePanels[SavedGame.saveSlot]);
-                deleting = false;
+                if (deleting)
+                {
+                    SavedGame.DeleteSave(SavedGame.saveSlot);
+                    savedGames[SavedGame.saveSlot] = new SavedGame();
+                    setUpPanel(savedGames[SavedGame.saveSlot], savePanels[SavedGame.saveSlot]);
+                    deleting = false;
+                }
+                else
+                {
+                    UnityEngine.SceneManagement.SceneManager.LoadScene("SampleScene");
+                }
             }
-            else
+            if (playerInput.actions["Cancel"].triggered)
             {
-                UnityEngine.SceneManagement.SceneManager.LoadScene("SampleScene");
+                deleting = !deleting;
             }
-        }
-        if (Input.GetButtonDown("Cancel"))
-        {
-            deleting = !deleting;
-        }
-        if (Input.GetAxis("Vertical") < 0 && lastAxis >= 0)
-        {
-            SavedGame.saveSlot++;
-            if (SavedGame.saveSlot >= savesToShow)
+            Vector2 moveInput = playerInput.actions["Move"].ReadValue<Vector2>();
+            if (moveInput.y < 0 && lastAxis >= 0)
             {
-                SavedGame.saveSlot -= savesToShow;
+                SavedGame.saveSlot++;
+                if (SavedGame.saveSlot >= savesToShow)
+                {
+                    SavedGame.saveSlot -= savesToShow;
+                }
             }
-        }
-        if (Input.GetAxis("Vertical") > 0 && lastAxis <= 0)
-        {
-            SavedGame.saveSlot--;
-            if (SavedGame.saveSlot < 0)
+            if (moveInput.y > 0 && lastAxis <= 0)
             {
-                SavedGame.saveSlot += savesToShow;
+                SavedGame.saveSlot--;
+                if (SavedGame.saveSlot < 0)
+                {
+                    SavedGame.saveSlot += savesToShow;
+                }
             }
+            lastAxis = moveInput.y;
         }
-        lastAxis = Input.GetAxis("Vertical");
     }
 }

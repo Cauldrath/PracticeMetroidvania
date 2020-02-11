@@ -15,24 +15,40 @@
                 },
                 {
                     "name": "Jump",
-                    "type": "Button",
+                    "type": "Value",
                     "id": "a1c7a4ea-9f0c-49e1-bf29-2354d8aee763",
-                    "expectedControlType": "",
+                    "expectedControlType": "Button",
                     "processors": "",
                     "interactions": ""
                 },
                 {
                     "name": "Dash",
-                    "type": "Button",
+                    "type": "Value",
                     "id": "0b7432f0-638c-4be3-a309-7ecf3b29d490",
-                    "expectedControlType": "",
+                    "expectedControlType": "Button",
                     "processors": "",
                     "interactions": ""
                 },
                 {
                     "name": "Attack",
-                    "type": "Button",
+                    "type": "Value",
                     "id": "2f87a858-c9f2-478b-979c-a4b04c6962d6",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "Submit",
+                    "type": "Button",
+                    "id": "28e0f92d-05ac-4fb6-90f8-88267f74fcdb",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "Cancel",
+                    "type": "Button",
+                    "id": "1ccc15d0-63d3-460b-831a-ebcb33fa6919",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": ""
@@ -173,6 +189,17 @@
                 },
                 {
                     "name": "",
+                    "id": "cd7e67dd-ef70-46f9-8352-4c7a7ab6da2d",
+                    "path": "<Gamepad>/dpad",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "cef8bb24-2224-4e60-ba3e-0d595366b25b",
                     "path": "<Gamepad>/buttonSouth",
                     "interactions": "",
@@ -185,7 +212,7 @@
                 {
                     "name": "",
                     "id": "40621b7c-cb64-48a2-ac12-630d1062db9c",
-                    "path": "<Keyboard>/k",
+                    "path": "<Keyboard>/j",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard&Mouse",
@@ -218,7 +245,7 @@
                 {
                     "name": "",
                     "id": "aa878a92-64a9-4652-8ae4-2a689f6f7e6d",
-                    "path": "<Keyboard>/l",
+                    "path": "<Keyboard>/k",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard&Mouse",
@@ -240,11 +267,33 @@
                 {
                     "name": "",
                     "id": "bdd98fbe-9a65-492c-86e6-9156321a6832",
-                    "path": "<Keyboard>/j",
+                    "path": "<Keyboard>/n",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "Attack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "fa14548d-71e9-476d-94c3-d76802922c79",
+                    "path": "*/{Submit}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Submit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "78de6208-55fe-48e2-95d6-e65116211127",
+                    "path": "*/{Cancel}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Cancel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

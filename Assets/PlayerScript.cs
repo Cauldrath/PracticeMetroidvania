@@ -49,13 +49,14 @@ public class PlayerScript : MonoBehaviour
     public SavedGame saveData = new SavedGame();
     public List<GameObject> savePoints = new List<GameObject>();
     public List<GameObject> bosses = new List<GameObject>();
-    public UnityEngine.UI.Image healthImage; 
+    public UnityEngine.UI.Image healthImage;
 
     private Rigidbody2D body;
     private BoxCollider2D hitbox;
     private Animator animator;
     private LayerMask terrainMask;
     private Damageable damageable;
+    private PlayerInput playerInput;
 
     private float jumpLeft = 0.0f;
     private float offGroundTime = 0.0f;
@@ -112,6 +113,7 @@ public class PlayerScript : MonoBehaviour
         animator = GetComponent<Animator>();
         terrainMask = LayerMask.GetMask("Default", "Hazards");
         damageable = GetComponent<Damageable>();
+        playerInput = GetComponent<PlayerInput>();
         Cursor.visible = false;
         LoadGame();
         while (saveData.bossesKilled.Count < bosses.Count)
@@ -527,16 +529,6 @@ public class PlayerScript : MonoBehaviour
         animator.SetBool("Uppercut", isUppercutting);
     }
 
-    bool dashPressed(Gamepad gamepad)
-    {
-        return gamepad.leftShoulder.wasPressedThisFrame || gamepad.buttonEast.wasPressedThisFrame;
-    }
-
-    bool dashReleased(Gamepad gamepad)
-    {
-        return gamepad.leftShoulder.wasReleasedThisFrame || gamepad.buttonEast.wasReleasedThisFrame;
-    }
-
     void Update()
     {
         // Do this every update just so it works with the editor
@@ -573,27 +565,27 @@ public class PlayerScript : MonoBehaviour
             healthImage.fillAmount = (float)damageable.Health / maxHealthBarSize;
         }
 
-        Gamepad gamepad = Gamepad.current;
-        if (knockbackLeft == 0 && gamepad != null)
+        if (knockbackLeft == 0 && playerInput != null)
         {
-            if (gamepad.buttonSouth.wasReleasedThisFrame)
+            Vector2 moveValue = playerInput.actions["Move"].ReadValue<Vector2>();
+            if (playerInput.actions["Jump"].ReadValue<float>() == 0.0f)
             {
                 jumpLeft = 0;
             }
 
-            if (dashReleased(gamepad))
+            if (playerInput.actions["Dash"].ReadValue<float>() == 0.0f)
             {
                 EndDash();
             }
 
-            if (jumpLeft <= 0 && !isAirDashing && !ceilingClinging && jumpsLeft > 0 && gamepad.buttonSouth.wasPressedThisFrame)
+            if (jumpLeft <= 0 && !isAirDashing && !ceilingClinging && jumpsLeft > 0 && playerInput.actions["Jump"].triggered)
             {
                 jumpLeft = jumpTime;
                 jumpsLeft--;
                 // If this is your first jump off the ground
                 if (jumpsLeft == maxJumps - 1)
                 {
-                    if (saveData.hasHighJump && !wallClimbing && ((gamepad.leftStick.ReadValue().y > 0 && dashLeft > 0) || gamepad.leftStick.ReadValue().y > 0.5))
+                    if (saveData.hasHighJump && !wallClimbing && ((moveValue.y > 0 && dashLeft > 0) || moveValue.y > 0.5))
                     {
                         jumpLeft = highJumpTime;
                         highJumping = true;
@@ -612,8 +604,8 @@ public class PlayerScript : MonoBehaviour
                 EndAttack();
             }
 
-            walkVelocity = gamepad.leftStick.ReadValue().x * moveSpeed;
-            if (dashPressed(gamepad))
+            walkVelocity = moveValue.x * moveSpeed;
+            if (playerInput.actions["Dash"].triggered)
             {
                 if (onGround)
                 {
@@ -637,7 +629,7 @@ public class PlayerScript : MonoBehaviour
             }
 
             // If you release up, stop high jumping and ceiling clinging
-            if (gamepad.leftStick.ReadValue().y <= 0)
+            if (moveValue.y <= 0)
             {
                 if (highJumping)
                 {
@@ -649,13 +641,13 @@ public class PlayerScript : MonoBehaviour
                 }
             }
 
-            if (gamepad.buttonWest.wasPressedThisFrame && attackDuration == 0)
+            if (playerInput.actions["Attack"].triggered && attackDuration == 0)
             {
                 EndDash();
                 currentMelee.active = false;
                 if (onGround)
                 {
-                    if (saveData.hasUppercut && gamepad.leftStick.ReadValue().y > 0.5f)
+                    if (saveData.hasUppercut && moveValue.y > 0.5f)
                     {
                         // Uppercut
                         isUppercutting = true;
@@ -673,7 +665,7 @@ public class PlayerScript : MonoBehaviour
                 }
                 else
                 {
-                    if (saveData.hasDownStab && gamepad.leftStick.ReadValue().y < -0.5f)
+                    if (saveData.hasDownStab && moveValue.y < -0.5f)
                     {
                         // Downstab
                         isDownstabbing = true;
@@ -694,7 +686,7 @@ public class PlayerScript : MonoBehaviour
             }
             if (wallClimbing)
             {
-                fastFalling = gamepad.leftStick.ReadValue().y < 0;
+                fastFalling = moveValue.y < 0;
             }
         }
     }
