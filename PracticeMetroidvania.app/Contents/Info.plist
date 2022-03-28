@@ -7,11 +7,11 @@
     <key>CFBundleExecutable</key>
     <string>Practice Metroidvania</string>
     <key>CFBundleGetInfoString</key>
-    <string>Unity Player version 2019.3.0f6 (27ab2135bccf). (c) 2020 Unity Technologies ApS. All rights reserved.</string>
+    <string>Unity Player version 2021.2.17f1 (efb8f635e7b1). (c) 2022 Unity Technologies ApS. All rights reserved.</string>
     <key>CFBundleIconFile</key>
     <string>PlayerIcon.icns</string>
     <key>CFBundleIdentifier</key>
-    <string>com.Company.ProductName</string>
+    <string>com.mpanyltCompany.Practice-Metroidvania</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
@@ -29,7 +29,7 @@
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.games</string>
     <key>LSMinimumSystemVersion</key>
-    <string>10.9.0</string>
+    <string>10.13.0</string>
     <key>NSAppTransportSecurity</key>
     <dict>
       <key>NSAllowsArbitraryLoads</key>
@@ -40,6 +40,6 @@
     <key>NSPrincipalClass</key>
     <string>PlayerApplication</string>
     <key>UnityBuildNumber</key>
-    <string>27ab2135bccf</string>
+    <string>efb8f635e7b1</string>
   </dict>
 </plist>
